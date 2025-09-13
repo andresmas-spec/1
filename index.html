@@ -77,7 +77,6 @@
         .max-h-60vh {
             max-height: 60vh;
         }
-        
     </style>
 </head>
 <body class="p-4 sm:p-8 bg-gray-100 min-h-screen flex items-center justify-center">
@@ -96,8 +95,8 @@
             <p class="font-bold">¡Éxito!</p>
             <p id="success-text"></p>
         </div>
-
-        <div id="loading-spinner" class="text-center my-8 hidden">
+        
+        <div id="loading-spinner" class="text-center my-8">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
             <p id="loading-text" class="mt-2 text-gray-500">Cargando...</p>
         </div>
@@ -107,7 +106,7 @@
                 <form id="script-form" class="bg-gray-50 p-6 rounded-xl shadow-inner">
                     <input type="hidden" id="script-id">
                     <input type="text" id="script-title" placeholder="Título del guión" required class="w-full px-4 py-2 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <select id="script-category" class="w-full px-4 py-2 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <select type="text" id="script-category" class="w-full px-4 py-2 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <option value="">Selecciona una categoría</option>
                         <option value="ficcion">Ficción</option>
                         <option value="no-ficcion">No Ficción</option>
@@ -156,7 +155,8 @@
                             <input type="file" id="video-upload" accept="video/*" class="hidden">
                         </div>
                         <div id="image-previews" class="flex flex-wrap gap-2 mb-2"></div>
-                        <span id="file-status" class="block text-sm text-gray-600"></span>
+                        <span id="image-status" class="block text-sm text-gray-600"></span>
+                        <span id="video-status" class="block text-sm text-gray-600"></span>
                         <input type="hidden" id="script-images">
                         <input type="hidden" id="script-video">
                     </div>
@@ -303,7 +303,7 @@
 
                 <div id="loading-spinner-modal" class="text-center text-gray-500 hidden mt-4">
                     <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-                    <p class="mt-2 text-sm">Generando...</p>
+                    <p id="loading-text-modal" class="mt-2 text-sm">Generando...</p>
                 </div>
 
                 <div id="modal-status-message" class="bg-red-100 text-red-700 border-l-4 border-red-500 rounded-lg p-4 hidden mt-4" role="alert">
@@ -332,10 +332,8 @@
     </div>
     
     <script>
-        // Reemplaza "TU_API_KEY_DE_GEMINI" con tu clave real.
-        const apiKey = "";
-        // Reemplaza "TU_API_KEY_DE_GOOGLE_MAPS" con tu clave real.
-        const googleMapsApiKey = "";
+        const apiKey = "YOUR_NEW_GEMINI_API_KEY"; // Reemplaza con tu clave de API de Gemini
+        const googleMapsApiKey = "YOUR_NEW_GOOGLE_MAPS_API_KEY"; // Reemplaza con tu clave de API de Google Maps
 
         // Variables del DOM
         const scriptsList = document.getElementById('scripts-list');
@@ -367,6 +365,8 @@
         const imageUploadInput = document.getElementById('image-upload');
         const videoUploadInput = document.getElementById('video-upload');
         const imagePreviewsContainer = document.getElementById('image-previews');
+        const imageStatus = document.getElementById('image-status');
+        const videoStatus = document.getElementById('video-status');
         const scriptModal = document.getElementById('script-modal');
         const modalTitle = document.getElementById('modal-title');
         const modalContent = document.getElementById('modal-content');
@@ -409,8 +409,9 @@
 
         let allScripts = [];
         let currentPage = 1;
-        const perPage = 10;
+        let perPage = 10;
         let db;
+        let googleMapsLoaded = false;
 
         // IndexedDB
         const initDB = () => {
@@ -443,8 +444,6 @@
                 allScripts = event.target.result;
                 renderFilteredScripts();
                 populateCategories();
-                loadingSpinner.classList.add('hidden');
-                appContent.classList.remove('hidden');
             };
         
             request.onerror = () => {
@@ -507,6 +506,11 @@
             document.getElementById('script-images').value = '';
             document.getElementById('script-video').value = '';
             document.getElementById('cancel-edit-btn').classList.add('hidden');
+            scriptLocationCoordsInput.value = '';
+            scriptLocationAddressInput.value = '';
+            locStatus.textContent = '';
+            imageStatus.textContent = '';
+            videoStatus.textContent = '';
         };
 
         // Renderizar categorías únicas
@@ -610,6 +614,7 @@
             });
             
             updatePaginationControls(currentPage, totalPages, filteredScripts.length);
+            addEventListeners();
         };
 
         const updatePaginationControls = (currentPage, totalPages, totalScripts) => {
@@ -651,108 +656,130 @@
                 showMessage(errorMessageEl, error, false);
             }
         });
+        
+        // Agrega los eventos de click a los botones de los guiones
+        const addEventListeners = () => {
+            document.querySelectorAll('.view-btn').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    const script = allScripts.find(s => s.id === id);
+                    if (script) {
+                        modalTitle.textContent = script.title;
+                        modalContent.value = script.content;
+                        
+                        modalImages.innerHTML = '';
+                        if (script.images && script.images.length > 0) {
+                            script.images.forEach(imgBase64 => {
+                                const img = document.createElement('img');
+                                img.src = imgBase64;
+                                img.className = 'image-preview';
+                                modalImages.appendChild(img);
+                            });
+                            modalImages.parentElement.classList.remove('hidden');
+                        } else {
+                            modalImages.parentElement.classList.add('hidden');
+                        }
 
-        // Manejadores de eventos de la lista de guiones
-        scriptsList.addEventListener('click', async (e) => {
-            if (e.target.classList.contains('view-btn')) {
-                const id = parseInt(e.target.dataset.id);
-                const script = allScripts.find(s => s.id === id);
-                if (script) {
-                    modalTitle.textContent = script.title;
-                    modalContent.value = script.content;
-                    
-                    modalImages.innerHTML = '';
-                    if (script.images && script.images.length > 0) {
-                        script.images.forEach(imgBase64 => {
-                            const img = document.createElement('img');
-                            img.src = imgBase64;
-                            img.className = 'image-preview';
-                            modalImages.appendChild(img);
-                        });
-                        modalImages.parentElement.classList.remove('hidden');
-                    } else {
-                        modalImages.parentElement.classList.add('hidden');
+                        if (script.video) {
+                            modalVideo.src = script.video;
+                            modalVideoContainer.classList.remove('hidden');
+                            modalVideoContainer.parentElement.classList.remove('hidden');
+                        } else {
+                            modalVideoContainer.classList.add('hidden');
+                        }
+
+                        if (script.location) {
+                            modalLocationText.textContent = script.location.address;
+                            locationDisplayContainer.classList.remove('hidden');
+                            if (window.googleMapsLoaded) {
+                                initMapModal(script.location.coords.split(',')[0], script.location.coords.split(',')[1]);
+                            } else {
+                                modalLocationText.textContent = 'Error: Google Maps API no está cargada. Por favor, recarga la página.';
+                                mapContainer.innerHTML = '';
+                            }
+                        } else {
+                            locationDisplayContainer.classList.add('hidden');
+                        }
+
+                        modalEditBtn.dataset.id = id;
+                        modalDeleteBtn.dataset.id = id;
+                        modalExportBtn.dataset.id = id;
+                        scriptModal.classList.remove('hidden');
                     }
+                });
+            });
 
-                    if (script.video) {
-                        modalVideo.src = script.video;
-                        modalVideoContainer.classList.remove('hidden');
-                        modalVideoContainer.parentElement.classList.remove('hidden');
-                    } else {
-                        modalVideoContainer.classList.add('hidden');
+            document.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    const script = allScripts.find(s => s.id === id);
+                    if (script) {
+                        formIdInput.value = script.id;
+                        formTitleInput.value = script.title;
+                        formContentInput.value = script.content;
+                        formCategoryInput.value = script.category;
+                        document.getElementById('cancel-edit-btn').classList.remove('hidden');
+                        
+                        imagePreviewsContainer.innerHTML = '';
+                        if (script.images && script.images.length > 0) {
+                            document.getElementById('script-images').value = JSON.stringify(script.images);
+                            script.images.forEach(imgBase64 => {
+                                const img = document.createElement('img');
+                                img.src = imgBase64;
+                                img.className = 'image-preview';
+                                imagePreviewsContainer.appendChild(img);
+                            });
+                            imageStatus.textContent = `Cargadas ${script.images.length} foto(s).`;
+                        } else {
+                            document.getElementById('script-images').value = '';
+                            imageStatus.textContent = '';
+                        }
+
+                        if (script.video) {
+                            document.getElementById('script-video').value = script.video;
+                            videoStatus.textContent = 'Video cargado con éxito.';
+                        } else {
+                            document.getElementById('script-video').value = '';
+                            videoStatus.textContent = '';
+                        }
+
+                        document.getElementById('script-location-coords').value = script.location ? script.location.coords : '';
+                        document.getElementById('script-location-address').value = script.location ? script.location.address : '';
+                        document.getElementById('location-status').textContent = script.location ? script.location.address : '';
+
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                     }
+                });
+            });
 
-                    if (script.location) {
-                        modalLocationText.textContent = script.location.address;
-                        locationDisplayContainer.classList.remove('hidden');
-                        initMap(script.location.coords.split(',')[0], script.location.coords.split(',')[1]);
-                    } else {
-                        locationDisplayContainer.classList.add('hidden');
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    if (confirm('¿Estás seguro de que quieres eliminar este guion?')) {
+                        try {
+                            await deleteScript(id);
+                            loadScripts();
+                            showMessage(successMessageEl, 'Guion eliminado con éxito.', true);
+                        } catch (error) {
+                            showMessage(errorMessageEl, error, false);
+                        }
                     }
+                });
+            });
 
-                    modalEditBtn.dataset.id = id;
-                    modalDeleteBtn.dataset.id = id;
-                    modalExportBtn.dataset.id = id;
-                    scriptModal.classList.remove('hidden');
-                }
-            } else if (e.target.classList.contains('edit-btn')) {
-                const id = parseInt(e.target.dataset.id);
-                const script = allScripts.find(s => s.id === id);
-                if (script) {
-                    formIdInput.value = script.id;
-                    formTitleInput.value = script.title;
-                    formContentInput.value = script.content;
-                    formCategoryInput.value = script.category;
-                    document.getElementById('cancel-edit-btn').classList.remove('hidden');
-                    
-                    imagePreviewsContainer.innerHTML = '';
-                    if (script.images && script.images.length > 0) {
-                        document.getElementById('script-images').value = JSON.stringify(script.images);
-                        script.images.forEach(imgBase64 => {
-                            const img = document.createElement('img');
-                            img.src = imgBase64;
-                            img.className = 'image-preview';
-                            imagePreviewsContainer.appendChild(img);
-                        });
-                    } else {
-                        document.getElementById('script-images').value = '';
+            document.querySelectorAll('.chat-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    const script = allScripts.find(s => s.id === id);
+                    if (script) {
+                        individualChatModal.dataset.scriptId = id;
+                        document.getElementById('individual-chat-title').textContent = `Chat sobre "${script.title}"`;
+                        individualChatMessages.innerHTML = '';
+                        individualChatModal.classList.remove('hidden');
                     }
-
-                    if (script.video) {
-                        document.getElementById('script-video').value = script.video;
-                        document.getElementById('file-status').textContent = 'Video cargado.';
-                    } else {
-                        document.getElementById('script-video').value = '';
-                    }
-
-                    document.getElementById('script-location-coords').value = script.location ? script.location.coords : '';
-                    document.getElementById('script-location-address').value = script.location ? script.location.address : '';
-                    document.getElementById('location-status').textContent = script.location ? script.location.address : '';
-
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-            } else if (e.target.classList.contains('delete-btn')) {
-                const id = parseInt(e.target.dataset.id);
-                if (confirm('¿Estás seguro de que quieres eliminar este guion?')) {
-                    try {
-                        await deleteScript(id);
-                        loadScripts();
-                        showMessage(successMessageEl, 'Guion eliminado con éxito.', true);
-                    } catch (error) {
-                        showMessage(errorMessageEl, error, false);
-                    }
-                }
-            } else if (e.target.classList.contains('chat-btn')) {
-                const id = parseInt(e.target.dataset.id);
-                const script = allScripts.find(s => s.id === id);
-                if (script) {
-                    individualChatModal.dataset.scriptId = id;
-                    document.getElementById('individual-chat-title').textContent = `Chat sobre "${script.title}"`;
-                    individualChatMessages.innerHTML = '';
-                    individualChatModal.classList.remove('hidden');
-                }
-            }
-        });
+                });
+            });
+        };
         
         // Manejadores de eventos de paginación
         prevPageBtn.addEventListener('click', () => {
@@ -833,7 +860,12 @@
         }
 
         // Geolocalización y mapa
-        getLocBtn.addEventListener('click', () => {
+        document.getElementById('get-location-btn').addEventListener('click', () => {
+            if (!window.googleMapsLoaded) {
+                 locStatus.textContent = "Error: Google Maps API no está cargada. Por favor, recarga la página.";
+                 return;
+            }
+
             if (navigator.geolocation) {
                 locStatus.textContent = 'Obteniendo tu ubicación...';
                 navigator.geolocation.getCurrentPosition(position => {
@@ -858,7 +890,7 @@
                         });
                 }, () => {
                     locStatus.textContent = 'No se pudo obtener la ubicación. Habilita los permisos.';
-                });
+                }, { enableHighAccuracy: true });
             } else {
                 locStatus.textContent = 'La geolocalización no es compatible con tu navegador.';
             }
@@ -866,19 +898,29 @@
 
         // Geolocalización por dirección
         document.getElementById('search-address-btn').addEventListener('click', () => {
+            if (!window.googleMapsLoaded) {
+                 locStatus.textContent = "Error: Google Maps API no está cargada. Por favor, recarga la página.";
+                 return;
+            }
+            
             const address = document.getElementById('script-address').value;
             if (address) {
                 locStatus.textContent = 'Buscando dirección...';
                 fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${googleMapsApiKey}`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.results && data.results.length > 0) {
                             const location = data.results[0].geometry.location;
                             const lat = location.lat;
                             const lng = location.lng;
                             scriptLocationCoordsInput.value = `${lat},${lng}`;
-                            scriptLocationAddressInput.value = address;
-                            locStatus.textContent = `Dirección encontrada: ${address}`;
+                            scriptLocationAddressInput.value = data.results[0].formatted_address;
+                            locStatus.textContent = `Dirección encontrada: ${data.results[0].formatted_address}`;
                         } else {
                             locStatus.textContent = 'Dirección no encontrada.';
                             scriptLocationCoordsInput.value = '';
@@ -911,7 +953,7 @@
                 };
                 reader.readAsDataURL(file);
             });
-            document.getElementById('file-status').textContent = `Cargando ${files.length} imagen(es)...`;
+            imageStatus.textContent = `Cargadas ${files.length} foto(s).`;
         });
 
         videoUploadInput.addEventListener('change', (e) => {
@@ -920,7 +962,7 @@
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     document.getElementById('script-video').value = event.target.result;
-                    document.getElementById('file-status').textContent = 'Video cargado.';
+                    videoStatus.textContent = 'Video cargado con éxito.';
                 };
                 reader.readAsDataURL(file);
             }
@@ -957,15 +999,18 @@
                         img.className = 'image-preview';
                         imagePreviewsContainer.appendChild(img);
                     });
+                    imageStatus.textContent = `Cargadas ${script.images.length} foto(s).`;
                 } else {
                     document.getElementById('script-images').value = '';
+                    imageStatus.textContent = '';
                 }
 
                 if (script.video) {
                     document.getElementById('script-video').value = script.video;
-                    document.getElementById('file-status').textContent = 'Video cargado.';
+                    videoStatus.textContent = 'Video cargado con éxito.';
                 } else {
                     document.getElementById('script-video').value = '';
+                    videoStatus.textContent = '';
                 }
 
                 document.getElementById('script-location-coords').value = script.location ? script.location.coords : '';
@@ -1058,13 +1103,279 @@
             }
         });
 
-        // Inicializar la aplicación
-        initDB().then(() => {
-            loadScripts();
-        }).catch(error => {
-            showMessage(errorMessageEl, error, false);
-            loadingSpinner.classList.add('hidden');
+        // Funciones para el análisis de la colección (activadas)
+        const showGlobalAIModal = (title) => {
+            document.getElementById('global-ai-modal-title').textContent = title;
+            globalSummaryOutput.classList.add('hidden');
+            globalAnalysisOutput.classList.add('hidden');
+            globalChatContainer.classList.add('hidden');
+            globalSearchContainer.classList.add('hidden');
+            globalAiModal.classList.remove('hidden');
+        };
+
+        const showLoading = (text) => {
+            loadingSpinnerModal.classList.remove('hidden');
+            document.getElementById('loading-text-modal').textContent = text;
+        };
+
+        const hideLoading = () => {
+            loadingSpinnerModal.classList.add('hidden');
+        };
+
+        const showModalMessage = (message, isSuccess = true) => {
+            modalStatusText.textContent = message;
+            modalStatusMessage.classList.remove('hidden');
+            modalStatusMessage.classList.toggle('bg-red-100', !isSuccess);
+            modalStatusMessage.classList.toggle('bg-green-100', isSuccess);
+            modalStatusMessage.classList.toggle('text-red-700', !isSuccess);
+            modalStatusMessage.classList.toggle('text-green-700', isSuccess);
+            modalStatusMessage.classList.toggle('border-red-500', !isSuccess);
+            modalStatusMessage.classList.toggle('border-green-500', isSuccess);
+            setTimeout(() => {
+                modalStatusMessage.classList.add('hidden');
+            }, 3000);
+        };
+        
+        // Chat individual con IA
+        closeIndividualChatBtn.addEventListener('click', () => {
+            individualChatModal.classList.add('hidden');
+        });
+
+        individualChatSendBtn.addEventListener('click', async () => {
+            const userMessage = individualChatInput.value.trim();
+            if (!userMessage) return;
+
+            individualChatInput.value = '';
+            addMessageToIndividualChat(userMessage, 'user');
+            
+            showLoading('Generando respuesta...');
+
+            const scriptId = parseInt(individualChatModal.dataset.scriptId);
+            const script = allScripts.find(s => s.id === scriptId);
+            const prompt = `Eres un asistente de IA experto en escritura creativa y guiones. Basado en el siguiente guion, responde la pregunta del usuario.
+            \n\nGuion:
+            Título: ${script.title}
+            Contenido: ${script.content}
+            \n\nPregunta del usuario: ${userMessage}`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+                });
+                const data = await response.json();
+                const text = data.candidates[0].content.parts[0].text;
+                addMessageToIndividualChat(text, 'gemini');
+            } catch (error) {
+                addMessageToIndividualChat('Lo siento, hubo un error al procesar tu solicitud. Por favor, intenta de nuevo.', 'gemini');
+                console.error('API Error:', error);
+            } finally {
+                hideLoading();
+                individualChatMessages.scrollTop = individualChatMessages.scrollHeight;
+            }
+        });
+
+        const addMessageToIndividualChat = (text, sender) => {
+            const messageEl = document.createElement('div');
+            messageEl.className = sender === 'user' ? 'chat-user-bubble' : 'chat-gemini-bubble';
+            messageEl.innerHTML = text.replace(/\n/g, '<br>');
+            individualChatMessages.appendChild(messageEl);
+        };
+        
+        closeGlobalAiModalBtn.addEventListener('click', () => {
+            globalAiModal.classList.add('hidden');
+        });
+
+        // Cargar mapa
+        window.initMap = () => {
+            window.googleMapsLoaded = true;
+            console.log("Google Maps API loaded successfully.");
+        };
+
+        const initMapModal = (lat, lng) => {
+             if (window.googleMapsLoaded) {
+                const map = new google.maps.Map(document.getElementById("map-container"), {
+                    zoom: 15,
+                    center: { lat: parseFloat(lat), lng: parseFloat(lng) },
+                });
+                new google.maps.Marker({
+                    position: { lat: parseFloat(lat), lng: parseFloat(lng) },
+                    map: map,
+                });
+            } else {
+                console.error("Google Maps API not yet loaded.");
+            }
+        };
+
+        // Nueva función para inicializar los botones de IA
+        const initializeAIButtons = () => {
+            globalSummaryBtn.addEventListener('click', async () => {
+                showGlobalAIModal('Resumen de la Colección');
+                globalSummaryOutput.classList.remove('hidden');
+                globalSummaryOutput.innerHTML = '';
+                showLoading('Generando resumen...');
+
+                if (allScripts.length === 0) {
+                    hideLoading();
+                    globalSummaryOutput.textContent = 'No hay guiones para resumir.';
+                    return;
+                }
+
+                const prompt = `Por favor, genera un resumen conciso de los siguientes guiones. Describe sus temas, géneros y cualquier patrón o similitud que encuentres.
+${allScripts.map(s => `\n---\nTitulo: ${s.title}\nContenido: ${s.content.substring(0, 500)}...`).join('')}`;
+
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+                    });
+                    const data = await response.json();
+                    const text = data.candidates[0].content.parts[0].text;
+                    globalSummaryOutput.innerHTML = `**Resumen de la Colección:**\n\n${text.replace(/\n/g, '<br>')}`;
+                } catch (error) {
+                    globalSummaryOutput.innerHTML = 'Error al generar el resumen. Asegúrate de que tu clave de API sea válida y el modelo esté disponible.';
+                    console.error('API Error:', error);
+                } finally {
+                    hideLoading();
+                }
+            });
+
+            globalChatBtn.addEventListener('click', () => {
+                showGlobalAIModal('Chat sobre la Colección');
+                globalChatContainer.classList.remove('hidden');
+                globalChatMessages.innerHTML = '';
+            });
+
+            globalChatSendBtn.addEventListener('click', async () => {
+                const userMessage = globalChatInput.value.trim();
+                if (!userMessage) return;
+
+                globalChatInput.value = '';
+                addMessageToChat(userMessage, 'user');
+                
+                showLoading('Generando respuesta...');
+
+                const context = allScripts.map(s => `Titulo: ${s.title}\nContenido: ${s.content.substring(0, 500)}...`).join('\n---\n');
+                const prompt = `Eres un asistente de IA experto en análisis de guiones. Basado en la siguiente colección de guiones, responde la pregunta del usuario. Si la información no está en los guiones, indícalo.
+\n\nColección de guiones:\n${context}\n\nPregunta del usuario: ${userMessage}`;
+
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+                    });
+                    const data = await response.json();
+                    const text = data.candidates[0].content.parts[0].text;
+                    addMessageToChat(text, 'gemini');
+                } catch (error) {
+                    addMessageToChat('Lo siento, hubo un error al procesar tu solicitud. Por favor, intenta de nuevo.', 'gemini');
+                    console.error('API Error:', error);
+                } finally {
+                    hideLoading();
+                    globalChatMessages.scrollTop = globalChatMessages.scrollHeight;
+                }
+            });
+
+            const addMessageToChat = (text, sender) => {
+                const messageEl = document.createElement('div');
+                messageEl.className = sender === 'user' ? 'chat-user-bubble' : 'chat-gemini-bubble';
+                messageEl.innerHTML = text.replace(/\n/g, '<br>');
+                globalChatMessages.appendChild(messageEl);
+            };
+            
+            globalSearchBtn.addEventListener('click', async () => {
+                showGlobalAIModal('Buscar Información');
+                globalSearchContainer.classList.remove('hidden');
+                globalSearchResults.innerHTML = '';
+            });
+
+            globalSearchSendBtn.addEventListener('click', async () => {
+                const query = globalSearchInput.value.trim();
+                if (!query) return;
+
+                globalSearchResults.innerHTML = '';
+                showLoading('Buscando en la web...');
+
+                // Placeholder para la búsqueda en Google.
+                const results = [
+                    { title: 'Ejemplo de Búsqueda 1', snippet: 'Este es un resultado de búsqueda de ejemplo que puedes usar para ayudarte a escribir tu guion.' },
+                    { title: 'Ejemplo de Búsqueda 2', snippet: 'Aquí hay más información relevante para tu consulta, extraída de la web.' }
+                ];
+                
+                if (results.length > 0) {
+                    results.forEach(result => {
+                        const resultEl = document.createElement('div');
+                        resultEl.className = 'bg-white p-4 rounded-lg shadow-sm';
+                        resultEl.innerHTML = `<h4 class="font-bold text-lg text-indigo-700">${result.title}</h4><p class="text-gray-700 text-sm mt-1">${result.snippet}</p>`;
+                        globalSearchResults.appendChild(resultEl);
+                    });
+                } else {
+                    globalSearchResults.innerHTML = '<p class="text-gray-500">No se encontraron resultados.</p>';
+                }
+
+                hideLoading();
+            });
+
+            globalAnalysisBtn.addEventListener('click', async () => {
+                showGlobalAIModal('Análisis Estadístico');
+                globalAnalysisOutput.classList.remove('hidden');
+                globalAnalysisOutput.innerHTML = '';
+                showLoading('Generando análisis...');
+
+                if (allScripts.length === 0) {
+                    hideLoading();
+                    globalAnalysisOutput.innerHTML = '<p class="text-gray-500">No hay guiones para analizar.</p>';
+                    return;
+                }
+
+                const categories = allScripts.map(s => s.category || 'Sin categoría').reduce((acc, cat) => {
+                    acc[cat] = (acc[cat] || 0) + 1;
+                    return acc;
+                }, {});
+                const totalWords = allScripts.reduce((sum, s) => sum + s.content.split(/\s+/).length, 0);
+                const avgWords = allScripts.length > 0 ? (totalWords / allScripts.length).toFixed(2) : 0;
+                const longestScript = allScripts.reduce((max, s) => s.content.length > max.content.length ? s : max, { content: '' });
+
+                let analysisText = `<h3 class="text-lg font-bold">Resumen Cuantitativo:</h3>`;
+                analysisText += `<p>Total de guiones: <strong>${allScripts.length}</strong></p>`;
+                analysisText += `<p>Palabras totales: <strong>${totalWords}</strong></p>`;
+                analysisText += `<p>Promedio de palabras por guion: <strong>${avgWords}</strong></p>`;
+                analysisText += `<p>Guion más largo: <strong>"${longestScript.title}"</strong> con <strong>${longestScript.content.split(/\s+/).length}</strong> palabras.</p>`;
+
+                analysisText += `<h3 class="text-lg font-bold mt-4">Distribución por Categoría:</h3>`;
+                analysisText += `<ul class="list-disc pl-5">`;
+                for (const cat in categories) {
+                    analysisText += `<li><strong>${cat}</strong>: ${categories[cat]} guion(es)</li>`;
+                }
+                analysisText += `</ul>`;
+
+                globalAnalysisOutput.innerHTML = analysisText;
+                hideLoading();
+            });
+        }
+        
+
+        // Inicio de la aplicación con la lógica corregida
+        document.addEventListener('DOMContentLoaded', async () => {
+            loadingSpinner.classList.remove('hidden');
+            appContent.classList.add('hidden');
+            
+            try {
+                await initDB();
+                loadScripts();
+                initializeAIButtons(); // Inicializa los botones después de la carga
+            } catch (error) {
+                showMessage(errorMessageEl, `Error al inicializar la base de datos local: ${error}. La aplicación funcionará, pero no se podrán guardar guiones.`, false);
+                console.error(error);
+            } finally {
+                loadingSpinner.classList.add('hidden');
+                appContent.classList.remove('hidden');
+            }
         });
     </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&callback=initMap"></script>
 </body>
 </html>
