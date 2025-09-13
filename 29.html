@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestor de Guiones</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-              body {
+        body {
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
             color: #1f2937;
@@ -63,1324 +64,1181 @@
             font-size: 2.5rem;
             color: #4f46e5;
         }
-        
-        .modal-content-scroll {
-            overflow-y: auto;
-            max-height: 75vh;
-        }
-        .modal-scroll-inner {
+        .script-card-buttons {
             display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        .max-h-60vh {
-            max-height: 60vh;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #fcfceb;
-            color: #000000;
-        }
-        h1, h2, h3 {
-            color: #1e392a;
-        }
-        .bg-card {
-            background-color: #ffffff;
-            border-color: #d8d8c3;
-        }
-        .voice-active {
-            color: #ef4444;
-        }
-        .modal {
-            background-color: rgba(0, 0, 0, 0.7);
-        }
-        .chat-user-bubble {
-            background-color: #ffc72c;
-            color: #000000;
-            padding: 10px 15px;
-            border-radius: 20px 20px 0 20px;
-            align-self: flex-end;
-            max-width: 75%;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .chat-gemini-bubble {
-            background-color: #e6e9ed;
-            color: #333;
-            padding: 10px 15px;
-            border-radius: 20px 20px 20px 0;
-            align-self: flex-start;
-            max-width: 75%;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .image-preview {
-            max-height: 100px;
-            width: auto;
-            border-radius: 8px;
-            object-fit: cover;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .video-preview-icon {
-            font-size: 4rem;
-            color: #6b7280;
-        }
-        .loading-spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #ffc72c;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-        .input-file-label {
-            display: inline-block;
-            cursor: pointer;
-            padding: 10px 20px;
-            border-radius: 9999px;
-            border: 1px solid #d1d5db;
-            color: #4b5563;
-            font-weight: 600;
-            background-color: #e5e7eb;
-            transition: background-color 0.2s;
-        }
-        .input-file-label:hover {
-            background-color: #d1d5db;
-        }
-        input[type="file"] {
-            display: none;
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
     </style>
 </head>
-<body class="p-6">
+<body class="p-4 sm:p-8 bg-gray-100 min-h-screen flex items-center justify-center">
 
     <div id="loading-spinner-overlay" class="fixed inset-0 bg-gray-100 flex flex-col items-center justify-center z-50">
-        <div id="loading-spinner" class="loading-spinner"></div>
-        <p id="loading-text" class="mt-4 text-gray-700 font-semibold">Cargando...</p>
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+        <p id="loading-text" class="mt-2 text-gray-500">Cargando guiones...</p>
     </div>
 
-    <div id="app-content" class="hidden">
-        <h1 class="text-3xl md:text-4xl font-extrabold text-center text-green-800 mb-8 md:mb-12">Gestor de Guiones</h1>
+    <div id="app-content" class="bg-white rounded-xl shadow-2xl p-6 sm:p-10 w-full max-w-4xl border-t-8 border-indigo-600 hidden">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">Gestor de Guiones</h1>
+            <p class="text-gray-600">Guarda tus guiones de forma local con la ayuda de la IA.</p>
+        </header>
 
-        <div id="status-message" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-            <span id="status-text" class="block sm:inline"></span>
+        <div id="status-message" class="bg-red-100 text-red-700 border-l-4 border-red-500 rounded-lg p-4 hidden mb-6" role="alert">
+            <p class="font-bold">Error del Sistema</p>
+            <p id="status-text"></p>
         </div>
-        <div id="success-message" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
-            <span id="success-text" class="block sm:inline"></span>
+        <div id="success-message" class="bg-green-100 text-green-700 border-l-4 border-green-500 rounded-lg p-4 hidden mb-6" role="alert">
+            <p class="font-bold">¡Éxito!</p>
+            <p id="success-text"></p>
         </div>
 
-        <div class="bg-card p-6 rounded-xl shadow-lg mb-8">
-            <h2 class="text-2xl font-bold text-green-800 mb-4 border-b pb-2 border-green-800">Guardar Guión</h2>
-            <form id="script-form" class="space-y-6">
+        <div class="mb-8">
+            <form id="script-form" class="bg-gray-50 p-6 rounded-xl shadow-inner">
                 <input type="hidden" id="script-id">
-                <input type="hidden" id="script-images">
-                <input type="hidden" id="script-video">
-                <input type="hidden" id="script-location-coords">
-                <input type="hidden" id="script-location-address">
+                <input type="text" id="script-title" placeholder="Título del guión" required class="w-full px-4 py-2 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <select id="script-category" class="w-full px-4 py-2 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="">Selecciona una categoría</option>
+                    <option value="ficcion">Ficción</option>
+                    <option value="no-ficcion">No Ficción</option>
+                    <option value="poesia">Poesía</option>
+                    <option value="guion-cinematografico">Guion Cinematográfico</option>
+                    <option value="guion-teatral">Guion Teatral</option>
+                    <option value="podcast">Podcast</option>
+                    <option value="otro">Otro</option>
+                </select>
+                <div class="relative mb-4">
+                    <textarea id="script-content" placeholder="Escribe tu guión aquí..." rows="8" required class="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                    <button type="button" id="voice-to-text-btn" class="absolute top-2 right-2 text-gray-400 hover:text-indigo-600 transition-colors duration-200 focus:outline-none">
+                        <i class="fas fa-microphone text-xl"></i>
+                    </button>
+                </div>
+                <div id="voice-status" class="text-center text-gray-500 text-sm mb-4 hidden"></div>
 
-                <div>
-                    <label for="script-title" class="block text-sm font-medium text-gray-700">Título</label>
-                    <input type="text" id="script-title" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 transition-colors">
-                </div>
-                <div>
-                    <label for="script-category" class="block text-sm font-medium text-gray-700">Categoría</label>
-                    <select id="script-category" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 transition-colors">
-                        <option value="Sin categoría">Sin categoría</option>
-                        <option value="Película">Película</option>
-                        <option value="Cortometraje">Cortometraje</option>
-                        <option value="Serie">Serie</option>
-                        <option value="Documental">Documental</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="script-content" class="block text-sm font-medium text-gray-700">Contenido del Guión</label>
-                    <textarea id="script-content" rows="6" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 transition-colors"></textarea>
-                    <div class="flex items-center mt-2">
-                        <button type="button" id="voice-to-text-btn" class="hidden text-gray-500 hover:text-yellow-600 transition-colors duration-200">
-                            <i class="fas fa-microphone text-2xl"></i>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Ubicación (opcional):</label>
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 items-center">
+                        <button type="button" id="get-location-btn" class="bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-600 transition-colors duration-300 flex items-center justify-center w-full sm:w-auto">
+                            <i class="fas fa-map-marker-alt mr-2"></i>Ubicación Actual
                         </button>
-                        <span id="voice-status" class="ml-2 text-sm text-gray-500 hidden">Presiona para hablar</span>
+                        <div class="flex w-full space-x-2 mt-2 sm:mt-0">
+                            <input type="text" id="script-address" placeholder="O escribe una dirección..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button type="button" id="search-address-btn" class="bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors duration-300 flex-shrink-0">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
                     </div>
+                    <span id="location-status" class="block text-sm text-gray-600 mt-2"></span>
+                    <input type="hidden" id="script-location-coords">
+                    <input type="hidden" id="script-location-address">
                 </div>
 
-                <div class="space-y-4 pt-4 border-t border-gray-200">
-                    <h3 class="text-lg font-bold text-green-800">Ubicación</h3>
-                    <div class="flex flex-col md:flex-row items-stretch md:items-center space-y-2 md:space-y-0 md:space-x-2">
-                        <input type="text" id="script-address" placeholder="Buscar dirección" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500">
-                        <button type="button" id="search-address-btn" class="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 transition-colors">Buscar</button>
-                        <button type="button" id="get-location-btn" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors">Mi Ubicación</button>
-                    </div>
-                    <p id="location-status" class="text-sm text-gray-500"></p>
-                </div>
-
-                <div class="space-y-4 pt-4 border-t border-gray-200">
-                    <h3 class="text-lg font-bold text-green-800">Multimedia</h3>
-                    <div class="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-4">
-                        <label class="input-file-label">
-                            <input type="file" id="image-upload" accept="image/*" multiple/>
-                            <i class="fas fa-image mr-2"></i>Elegir Fotos
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Archivos Multimedia (opcional):</label>
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                        <label for="image-upload" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg cursor-pointer transition-colors duration-300 flex items-center">
+                            <i class="fas fa-image mr-2"></i> Subir Fotos
                         </label>
-                        <label class="input-file-label">
-                            <input type="file" id="video-upload" accept="video/*"/>
-                            <i class="fas fa-video mr-2"></i>Elegir Video
+                        <input type="file" id="image-upload" multiple accept="image/*" class="hidden">
+                        <label for="video-upload" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg cursor-pointer transition-colors duration-300 flex items-center">
+                            <i class="fas fa-video mr-2"></i> Subir Video
                         </label>
+                        <input type="file" id="video-upload" accept="video/*" class="hidden">
                     </div>
-                    <p id="file-status" class="text-sm text-gray-500"></p>
-                    <div id="image-previews" class="flex flex-wrap gap-2 mt-2"></div>
+                    <div id="image-previews" class="flex flex-wrap gap-2 mb-2"></div>
+                    <span id="file-status" class="block text-sm text-gray-600"></span>
+                    <input type="hidden" id="script-images">
+                    <input type="hidden" id="script-video">
                 </div>
-
-                <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4 pt-4">
-                    <button type="submit" id="save-script-btn" class="bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300">Guardar Guión</button>
-                    <button type="button" id="cancel-edit-btn" class="hidden bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300">Cancelar Edición</button>
-                </div>
+                
+                <button type="submit" id="save-script-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg transition-colors duration-300">Guardar Guión</button>
+                <button type="button" id="cancel-edit-btn" class="w-full mt-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 rounded-lg transition-colors duration-300 hidden">Cancelar Edición</button>
             </form>
         </div>
 
-        <div class="bg-card p-6 rounded-xl shadow-lg mb-8">
-            <h2 class="text-2xl font-bold text-green-800 mb-4 border-b pb-2 border-green-800">Guiones Guardados</h2>
-            <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 md:space-x-4">
-                <div class="w-full md:w-1/3">
-                    <input type="text" id="main-search" placeholder="Buscar guiones..." class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-colors">
-                </div>
-                <div class="w-full md:w-1/3 flex flex-col md:flex-row items-stretch md:items-center space-y-2 md:space-y-0 md:space-x-2">
-                    <div class="flex items-center space-x-2 w-full">
-                        <label for="filter-category" class="text-gray-700 whitespace-nowrap">Categoría:</label>
-                        <select id="filter-category" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-colors">
-                            <option value="all">Todas</option>
-                            <option value="Sin categoría">Sin categoría</option>
-                            <option value="Película">Película</option>
-                            <option value="Cortometraje">Cortometraje</option>
-                            <option value="Serie">Serie</option>
-                            <option value="Documental">Documental</option>
-                        </select>
-                    </div>
-                    <div class="flex items-center space-x-2 w-full">
-                        <label for="sort-menu" class="text-gray-700 whitespace-nowrap">Ordenar por:</label>
-                        <select id="sort-menu" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-colors">
-                            <option value="recent">Más recientes</option>
-                            <option value="oldest">Más antiguos</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="w-full md:w-1/3 flex justify-center md:justify-end space-x-2">
-                    <button id="summarize-all-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors duration-300">
-                        <i class="fas fa-brain mr-2"></i>Resumir
-                    </button>
-                    <button id="chat-all-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors duration-300">
-                        <i class="fas fa-comments mr-2"></i>Chat
-                    </button>
-                    <button id="search-all-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors duration-300">
-                        <i class="fas fa-search mr-2"></i>Buscar
-                    </button>
-                </div>
+        <div class="mb-8 p-6 bg-gray-50 rounded-xl shadow-inner">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Análisis de la Colección</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <button id="summarize-all-btn" class="bg-purple-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-purple-600 transition text-center">Resumir Todos ✨</button>
+                <button id="chat-all-btn" class="bg-blue-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-blue-600 transition text-center">Chat sobre la Colección 💬</button>
+                <button id="search-all-btn" class="bg-orange-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-orange-600 transition text-center">Buscar Información 🔍</button>
             </div>
-            <div class="flex justify-end mt-4 space-x-2">
-                <button id="export-all-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">
-                    <i class="fas fa-download mr-2"></i>Exportar
+        </div>
+
+        <div class="mb-4 flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0 sm:space-x-4">
+            <h2 class="text-2xl font-bold text-gray-800">Mis Guiones</h2>
+            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+                <button id="export-all-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center justify-center space-x-2">
+                    <i class="fas fa-file-export"></i>
+                    <span>Exportar Todos</span>
                 </button>
-                <label class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 cursor-pointer">
-                    <i class="fas fa-upload mr-2"></i>Importar
+                <div class="relative w-full sm:w-auto">
+                    <label for="import-file" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 cursor-pointer flex items-center justify-center space-x-2">
+                        <i class="fas fa-file-import"></i>
+                        <span>Importar</span>
+                    </label>
                     <input type="file" id="import-file" class="hidden" accept=".json">
-                </label>
-            </div>
-        </div>
-
-        <div id="scripts-list" class="space-y-6">
-            </div>
-
-        <div id="script-modal" class="modal fixed inset-0 hidden items-center justify-center p-4 z-40">
-            <div class="bg-card rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-screen overflow-y-auto transform transition-all">
-                <div class="flex justify-between items-center border-b pb-3 mb-4">
-                    <h3 id="modal-title" class="text-2xl font-bold text-green-800"></h3>
-                    <button id="close-modal-btn" class="text-gray-500 hover:text-gray-700 transition-colors">
-                        <i class="fas fa-times text-2xl"></i>
-                    </button>
-                </div>
-                <div class="space-y-4">
-                    <p id="modal-content" class="text-gray-700 whitespace-pre-wrap"></p>
-                    <div id="modal-media-container" class="space-y-4 mt-4">
-                        <h4 class="text-lg font-semibold text-green-800">Multimedia</h4>
-                        <div id="modal-images" class="flex flex-wrap gap-2"></div>
-                        <div id="modal-video-container" class="hidden">
-                            <video id="modal-video" controls class="w-full rounded-lg shadow-md"></video>
-                        </div>
-                    </div>
-                    <div id="location-display-container" class="mt-4 hidden">
-                        <h4 class="text-lg font-semibold text-green-800">Ubicación</h4>
-                        <p id="modal-location-text" class="text-gray-600"></p>
-                        <div id="map-container" class="mt-2 h-64 rounded-lg shadow-md"></div>
-                    </div>
-                </div>
-                <div class="mt-6 flex justify-end space-x-4">
-                    <button class="edit-btn bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">Editar</button>
-                    <button class="delete-btn bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">Eliminar</button>
-                    <button class="export-btn bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">Exportar</button>
-                </div>
-            </div>
-        </div>
-        
-        <div id="global-ai-modal" class="modal fixed inset-0 hidden items-center justify-center p-4 z-40">
-            <div class="bg-card rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-screen overflow-y-auto transform transition-all">
-                <div class="flex justify-between items-center border-b pb-3 mb-4">
-                    <h3 id="global-ai-modal-title" class="text-2xl font-bold text-green-800"></h3>
-                    <button id="close-global-ai-modal-btn" class="text-gray-500 hover:text-gray-700 transition-colors">
-                        <i class="fas fa-times text-2xl"></i>
-                    </button>
-                </div>
-                <div class="space-y-4">
-                    <div id="loading-spinner-modal" class="hidden flex justify-center items-center py-4">
-                        <div class="loading-spinner"></div>
-                    </div>
-                    <div id="global-summary-output" class="hidden whitespace-pre-wrap p-4 bg-gray-50 rounded-lg shadow-inner"></div>
-                    <div id="global-chat-container" class="hidden">
-                        <div id="global-chat-messages" class="flex flex-col h-96 overflow-y-auto p-4 border rounded-lg bg-gray-50 mb-4"></div>
-                        <div class="flex items-center space-x-2">
-                            <input type="text" id="global-chat-input" class="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500" placeholder="Escribe tu mensaje...">
-                            <button id="global-chat-send-btn" class="bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-800 transition-colors">Enviar</button>
-                        </div>
-                    </div>
-                    <div id="global-search-container" class="hidden">
-                        <div class="flex items-center space-x-2 mb-4">
-                            <input type="text" id="global-search-input" class="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500" placeholder="Escribe tu consulta...">
-                            <button id="global-search-send-btn" class="bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-800 transition-colors">Buscar</button>
-                        </div>
-                        <div id="global-search-results" class="space-y-4 p-4 bg-gray-50 rounded-lg shadow-inner"></div>
-                    </div>
                 </div>
             </div>
         </div>
 
-        <div id="individual-chat-modal" class="modal fixed inset-0 hidden items-center justify-center p-4 z-40">
-            <div class="bg-card rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-screen overflow-y-auto transform transition-all">
-                <div class="flex justify-between items-center border-b pb-3 mb-4">
-                    <h3 id="individual-chat-title" class="text-2xl font-bold text-green-800"></h3>
-                    <button id="close-individual-chat-btn" class="text-gray-500 hover:text-gray-700 transition-colors">
-                        <i class="fas fa-times text-2xl"></i>
-                    </button>
+        <div class="mb-6 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+            <input type="text" id="main-search-input" placeholder="Buscar por título, contenido o categoría..." class="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <select id="filter-category" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="all">Todas las categorías</option>
+                <option value="ficcion">Ficción</option>
+                <option value="no-ficcion">No Ficción</option>
+                <option value="poesia">Poesía</option>
+                <option value="guion-cinematografico">Guion Cinematográfico</option>
+                <option value="guion-teatral">Guion Teatral</option>
+                <option value="podcast">Podcast</option>
+                <option value="otro">Otro</option>
+            </select>
+            <select id="sort-menu" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="recent">Más recientes</option>
+                <option value="oldest">Más antiguos</option>
+            </select>
+        </div>
+
+        <div id="scripts-list" class="space-y-4">
+        </div>
+    </div>
+
+    <div id="script-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white p-6 rounded-3xl shadow-custom w-full max-w-2xl max-h-[95vh] flex flex-col overflow-y-auto z-50">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="modal-title" class="text-2xl font-bold text-gray-900 truncate"></h2>
+                <button id="close-modal" class="text-gray-500 hover:text-gray-800 transition">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            
+            <textarea id="modal-content" rows="10" class="w-full p-4 rounded-lg bg-gray-100 border-2 border-gray-200 overflow-y-auto max-h-[60vh] resize-none flex-grow" readonly></textarea>
+
+            <div id="modal-media-container" class="mt-4 hidden">
+                <h3 class="text-lg font-bold text-gray-800 mb-2">Archivos Multimedia</h3>
+                <div id="modal-images" class="flex flex-wrap gap-2 mb-4"></div>
+                <div id="modal-video-container" class="w-full hidden">
+                    <video id="modal-video" controls class="w-full rounded-lg"></video>
                 </div>
-                <div id="individual-chat-messages" class="flex flex-col h-96 overflow-y-auto p-4 border rounded-lg bg-gray-50 mb-4"></div>
-                <div class="flex items-center space-x-2">
-                    <input type="text" id="individual-chat-input" class="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500" placeholder="Escribe tu mensaje...">
-                    <button id="individual-chat-send-btn" class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors">Enviar</button>
+            </div>
+            <div class="mt-4" id="location-display-container">
+                <h3 class="text-lg font-bold text-gray-800 mb-2">Ubicación del Guion</h3>
+                <p id="modal-location-text" class="text-gray-700 mb-2"></p>
+                <div id="map-container" class="w-full h-64 rounded-lg bg-gray-200"></div>
+            </div>
+            
+            <div class="mt-4 flex flex-wrap gap-2 justify-end modal-action-buttons">
+                <button class="export-btn bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">Exportar</button>
+                <button class="edit-btn bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">Editar</button>
+                <button class="delete-btn bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">Eliminar</button>
+                <button class="chat-btn bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">Chat con IA</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="global-ai-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white p-6 rounded-3xl shadow-custom w-full max-w-2xl max-h-[95vh] flex flex-col z-50">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="global-ai-modal-title" class="text-2xl font-bold text-gray-900 truncate">Análisis de la Colección</h2>
+                <button id="close-global-ai-modal" class="text-gray-500 hover:text-gray-800 transition">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            
+            <div class="flex-grow flex flex-col">
+                <div id="global-summary-output" class="p-4 rounded-lg ai-message hidden overflow-y-auto max-h-[60vh] mb-4"></div>
+                <div id="global-chat-container" class="flex-grow flex flex-col hidden">
+                    <div id="global-chat-messages" class="flex-grow flex flex-col p-4 bg-gray-100 rounded-lg mb-2 overflow-y-auto max-h-[60vh] space-y-4"></div>
+                    <div class="flex">
+                        <input type="text" id="global-chat-input" placeholder="Pregunta sobre la colección de guiones..." class="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <button id="global-chat-send" class="ml-2 bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 transition">Enviar</button>
+                    </div>
+                </div>
+                
+                <div id="global-search-container" class="flex-grow flex flex-col hidden">
+                    <div id="global-search-results" class="flex-grow p-4 bg-gray-100 rounded-lg mb-2 overflow-y-auto max-h-[60vh] space-y-4"></div>
+                    <div class="flex">
+                        <input type="text" id="global-search-input" placeholder="Busca información en la web..." class="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <button type="button" id="global-search-send-btn" class="ml-2 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition">Buscar</button>
+                    </div>
+                </div>
+
+                <div id="loading-spinner-modal" class="text-center text-gray-500 hidden mt-4">
+                    <i class="fas fa-spinner fa-spin text-2xl"></i>
+                    <p class="mt-2 text-sm">Generando...</p>
+                </div>
+
+                <div id="modal-status-message" class="bg-red-100 text-red-700 border-l-4 border-red-500 rounded-lg p-4 hidden mt-4" role="alert">
+                    <p id="modal-status-text"></p>
                 </div>
             </div>
         </div>
+    </div>
+    
+    <div id="individual-chat-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white p-6 rounded-3xl shadow-custom w-full max-w-2xl max-h-[95vh] flex flex-col z-50">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="individual-chat-title" class="text-2xl font-bold text-gray-900 truncate">Chat de Guion</h2>
+                <button id="close-individual-chat" class="text-gray-500 hover:text-gray-800 transition">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div class="flex-grow flex flex-col">
+                <div id="individual-chat-messages" class="flex-grow flex flex-col p-4 bg-gray-100 rounded-lg mb-2 overflow-y-auto max-h-[60vh] space-y-4"></div>
+                <div class="flex">
+                    <input type="text" id="individual-chat-input" placeholder="Pregunta sobre este guion..." class="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button id="individual-chat-send" class="ml-2 bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 transition">Enviar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    </div> <script>
-           // Reemplaza "TU_API_KEY_DE_GEMINI" con tu clave real.
-        const apiKey = "AIzaSyAyFPqL4iu58iSmFKyko6mCo3kzvrf3nwM";
-        // Reemplaza "TU_API_KEY_DE_GOOGLE_MAPS" con tu clave real.
-        const googleMapsApiKey = "AIzaSyBFbuyZmbQvfCCM3sSt6ZlG5WUqVO8yXas";
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        // --- CÓDIGO A REVISAR ---
+        // Reemplaza estas claves con tus propias claves API para que las funciones de IA funcionen correctamente.
+        // Google Maps API Key: https://developers.google.com/maps/documentation/javascript/get-api-key
+        const GOOGLE_MAPS_API_KEY = "AIzaSyAyFPqL4iu58iSmFKyko6mCo3kzvrf3nwM";
 
-        // --- Elementos del DOM ---
-        const loadingSpinnerOverlayEl = document.getElementById('loading-spinner-overlay');
-        const loadingSpinnerEl = document.getElementById('loading-spinner');
-        const loadingTextEl = document.getElementById('loading-text');
-        const appContentEl = document.getElementById('app-content');
-        
-        const scriptForm = document.getElementById('script-form');
-        const scriptIdInput = document.getElementById('script-id');
-        const scriptTitleInput = document.getElementById('script-title');
-        const scriptContentInput = document.getElementById('script-content');
-        const scriptCategoryInput = document.getElementById('script-category');
-        const scriptsList = document.getElementById('scripts-list');
-        const saveScriptBtn = document.getElementById('save-script-btn');
-        const cancelEditBtn = document.getElementById('cancel-edit-btn');
-        const mainSearchInput = document.getElementById('main-search');
-        const filterCategoryInput = document.getElementById('filter-category');
-        const sortMenuInput = document.getElementById('sort-menu');
-        const statusMessageEl = document.getElementById('status-message');
-        const statusTextEl = document.getElementById('status-text');
-        const successMessageEl = document.getElementById('success-message');
-        const successTextEl = document.getElementById('success-text');
+        // Gemini API Key: https://ai.google.dev/
+        const GEMINI_API_KEY = "AIzaSyBFbuyZmbQvfCCM3sSt6ZlG5WUqVO8yXas";
 
-        // Modal de visualización
-        const scriptModal = document.getElementById('script-modal');
-        const closeModalBtn = document.getElementById('close-modal-btn');
-        const modalTitle = document.getElementById('modal-title');
-        const modalContent = document.getElementById('modal-content');
-
-        // Elementos de geolocalización
-        const getLocationBtn = document.getElementById('get-location-btn');
-        const searchAddressBtn = document.getElementById('search-address-btn');
-        const scriptAddressInput = document.getElementById('script-address');
-        const locationStatusEl = document.getElementById('location-status');
-        const scriptLocationCoordsInput = document.getElementById('script-location-coords');
-        const scriptLocationAddressInput = document.getElementById('script-location-address');
-        const mapContainerEl = document.getElementById('map-container');
-        const locationDisplayContainer = document.getElementById('location-display-container');
-        const modalLocationText = document.getElementById('modal-location-text');
-
-        // Voz a texto
-        const voiceToTextBtn = document.getElementById('voice-to-text-btn');
-        const voiceStatusEl = document.getElementById('voice-status');
-
-        // Import/Export
-        const exportAllBtn = document.getElementById('export-all-btn');
-        const importFileEl = document.getElementById('import-file');
-
-        // AI Modals
-        const summarizeAllBtn = document.getElementById('summarize-all-btn');
-        const chatAllBtn = document.getElementById('chat-all-btn');
-        const searchAllBtn = document.getElementById('search-all-btn');
-
-        const globalAiModal = document.getElementById('global-ai-modal');
-        const closeGlobalAiModalBtn = document.getElementById('close-global-ai-modal-btn');
-        const globalSummaryOutput = document.getElementById('global-summary-output');
-        const loadingSpinnerModal = document.getElementById('loading-spinner-modal');
-        const globalChatContainer = document.getElementById('global-chat-container');
-        const globalChatMessages = document.getElementById('global-chat-messages');
-        const globalChatInput = document.getElementById('global-chat-input');
-        const globalChatSendBtn = document.getElementById('global-chat-send-btn');
-        const globalSearchContainer = document.getElementById('global-search-container');
-        const globalSearchInput = document.getElementById('global-search-input');
-        const globalSearchSendBtn = document.getElementById('global-search-send-btn');
-        const globalSearchResults = document.getElementById('global-search-results');
-
-        // Individual Chat
-        const individualChatModal = document.getElementById('individual-chat-modal');
-        const individualChatTitle = document.getElementById('individual-chat-title');
-        const closeIndividualChatBtn = document.getElementById('close-individual-chat-btn');
-        const individualChatMessages = document.getElementById('individual-chat-messages');
-        const individualChatInput = document.getElementById('individual-chat-input');
-        const individualChatSendBtn = document.getElementById('individual-chat-send-btn');
-        
-        // Nuevos elementos de multimedia
-        const imageUploadInput = document.getElementById('image-upload');
-        const videoUploadInput = document.getElementById('video-upload');
-        const imagePreviewsEl = document.getElementById('image-previews');
-        const fileStatusEl = document.getElementById('file-status');
-        const scriptImagesInput = document.getElementById('script-images');
-        const scriptVideoInput = document.getElementById('script-video');
-        const modalMediaContainer = document.getElementById('modal-media-container');
-        const modalImagesEl = document.getElementById('modal-images');
-        const modalVideoContainer = document.getElementById('modal-video-container');
-        const modalVideoEl = document.getElementById('modal-video');
-
-        let allScripts = [];
-        let db;
-        let globalChatHistory = [];
-        let individualChatHistory = [];
-        let currentScriptId = null;
-        let isListening = false;
-        let recognition = null;
-        let mapLoaded = false;
-
-        // --- IndexedDB ---
-        const DB_NAME = 'ScriptManagerDB';
+        const DB_NAME = 'scriptsDB';
         const DB_VERSION = 1;
         const STORE_NAME = 'scripts';
 
-        const initDB = () => {
+        let db;
+        let chatHistory = [];
+        let individualChatHistory = [];
+        let mapScriptLoaded = false;
+
+        // UI Elements
+        const appContent = document.getElementById('app-content');
+        const scriptsList = document.getElementById('scripts-list');
+        const scriptForm = document.getElementById('script-form');
+        const scriptTitle = document.getElementById('script-title');
+        const scriptCategory = document.getElementById('script-category');
+        const scriptContent = document.getElementById('script-content');
+        const scriptId = document.getElementById('script-id');
+        const saveScriptBtn = document.getElementById('save-script-btn');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        const statusMessage = document.getElementById('status-message');
+        const statusText = document.getElementById('status-text');
+        const successMessage = document.getElementById('success-message');
+        const successText = document.getElementById('success-text');
+        const loadingSpinnerOverlay = document.getElementById('loading-spinner-overlay');
+        const loadingText = document.getElementById('loading-text');
+
+        // Modal Elements (Script View)
+        const scriptModal = document.getElementById('script-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalContent = document.getElementById('modal-content');
+        const modalMediaContainer = document.getElementById('modal-media-container');
+        const modalImages = document.getElementById('modal-images');
+        const modalVideoContainer = document.getElementById('modal-video-container');
+        const modalVideo = document.getElementById('modal-video');
+        const locationDisplayContainer = document.getElementById('location-display-container');
+        const modalLocationText = document.getElementById('modal-location-text');
+        const mapContainer = document.getElementById('map-container');
+        const closeModalBtn = document.getElementById('close-modal');
+
+        // Global AI Modal Elements
+        const globalAiModal = document.getElementById('global-ai-modal');
+        const globalAiModalTitle = document.getElementById('global-ai-modal-title');
+        const closeGlobalAiModalBtn = document.getElementById('close-global-ai-modal');
+        const summarizeAllBtn = document.getElementById('summarize-all-btn');
+        const chatAllBtn = document.getElementById('chat-all-btn');
+        const searchAllBtn = document.getElementById('search-all-btn');
+        const globalSummaryOutput = document.getElementById('global-summary-output');
+        const globalChatContainer = document.getElementById('global-chat-container');
+        const globalChatMessages = document.getElementById('global-chat-messages');
+        const globalChatInput = document.getElementById('global-chat-input');
+        const globalChatSendBtn = document.getElementById('global-chat-send');
+        const globalSearchContainer = document.getElementById('global-search-container');
+        const globalSearchInput = document.getElementById('global-search-input');
+        const globalSearchResults = document.getElementById('global-search-results');
+        const globalSearchSendBtn = document.getElementById('global-search-send-btn');
+        const loadingSpinnerModal = document.getElementById('loading-spinner-modal');
+        const modalStatusMessage = document.getElementById('modal-status-message');
+        const modalStatusText = document.getElementById('modal-status-text');
+
+        // Individual Chat Modal Elements
+        const individualChatModal = document.getElementById('individual-chat-modal');
+        const individualChatTitle = document.getElementById('individual-chat-title');
+        const closeIndividualChatBtn = document.getElementById('close-individual-chat');
+        const individualChatMessages = document.getElementById('individual-chat-messages');
+        const individualChatInput = document.getElementById('individual-chat-input');
+        const individualChatSendBtn = document.getElementById('individual-chat-send');
+
+        // Global Action Elements
+        const mainSearchInput = document.getElementById('main-search-input');
+        const filterCategory = document.getElementById('filter-category');
+        const sortMenu = document.getElementById('sort-menu');
+        const exportAllBtn = document.getElementById('export-all-btn');
+        const importFile = document.getElementById('import-file');
+
+        // Geolocation Elements
+        const getLocationBtn = document.getElementById('get-location-btn');
+        const scriptAddress = document.getElementById('script-address');
+        const searchAddressBtn = document.getElementById('search-address-btn');
+        const locationStatus = document.getElementById('location-status');
+        const scriptLocationCoords = document.getElementById('script-location-coords');
+        const scriptLocationAddress = document.getElementById('script-location-address');
+
+        // Multimedia Elements
+        const imageUpload = document.getElementById('image-upload');
+        const videoUpload = document.getElementById('video-upload');
+        const imagePreviews = document.getElementById('image-previews');
+        const fileStatus = document.getElementById('file-status');
+        const scriptImages = document.getElementById('script-images');
+        const scriptVideo = document.getElementById('script-video');
+        let uploadedImages = [];
+        let uploadedVideo = null;
+
+        // Speech Recognition
+        const voiceToTextBtn = document.getElementById('voice-to-text-btn');
+        const voiceStatus = document.getElementById('voice-status');
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition;
+
+        // --- Core Functions ---
+
+        function showLoading(text) {
+            loadingText.textContent = text;
+            loadingSpinnerOverlay.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            loadingSpinnerOverlay.classList.add('hidden');
+        }
+
+        function showStatus(text, type = 'error') {
+            if (type === 'error') {
+                statusMessage.classList.remove('hidden');
+                statusMessage.classList.remove('bg-green-100', 'text-green-700', 'border-green-500');
+                statusMessage.classList.add('bg-red-100', 'text-red-700', 'border-red-500');
+                statusMessage.querySelector('p').textContent = 'Error del Sistema';
+                statusText.textContent = text;
+            } else if (type === 'success') {
+                successMessage.classList.remove('hidden');
+                successText.textContent = text;
+            }
+            setTimeout(() => {
+                statusMessage.classList.add('hidden');
+                successMessage.classList.add('hidden');
+            }, 5000);
+        }
+
+        function showModalStatus(text, type = 'error') {
+            modalStatusMessage.classList.remove('hidden');
+            if (type === 'error') {
+                modalStatusMessage.classList.remove('bg-green-100', 'text-green-700', 'border-green-500');
+                modalStatusMessage.classList.add('bg-red-100', 'text-red-700', 'border-red-500');
+            } else {
+                modalStatusMessage.classList.remove('bg-red-100', 'text-red-700', 'border-red-500');
+                modalStatusMessage.classList.add('bg-green-100', 'text-green-700', 'border-green-500');
+            }
+            modalStatusText.textContent = text;
+        }
+
+        function hideModalStatus() {
+            modalStatusMessage.classList.add('hidden');
+        }
+
+        function showLoadingModal() {
+            loadingSpinnerModal.classList.remove('hidden');
+        }
+
+        function hideLoadingModal() {
+            loadingSpinnerModal.classList.add('hidden');
+        }
+
+        // --- IndexedDB Functions ---
+
+        function openDatabase() {
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open(DB_NAME, DB_VERSION);
 
                 request.onupgradeneeded = (event) => {
-                    db = event.target.result;
+                    const db = event.target.result;
                     if (!db.objectStoreNames.contains(STORE_NAME)) {
-                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                        const objectStore = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                        objectStore.createIndex('title', 'title', { unique: false });
+                        objectStore.createIndex('category', 'category', { unique: false });
+                        objectStore.createIndex('createdAt', 'createdAt', { unique: false });
                     }
                 };
 
                 request.onsuccess = (event) => {
                     db = event.target.result;
-                    resolve();
+                    resolve(db);
                 };
 
                 request.onerror = (event) => {
-                    reject(event.target.error);
+                    console.error('IndexedDB error:', event.target.error);
+                    reject('Error al abrir la base de datos.');
                 };
             });
-        };
+        }
 
-        const saveScript = (script) => {
+        function addScript(script) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.add(script);
+
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = (event) => reject(event.target.error);
+            });
+        }
+
+        function updateScript(script) {
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction([STORE_NAME], 'readwrite');
                 const store = transaction.objectStore(STORE_NAME);
                 const request = store.put(script);
 
                 request.onsuccess = () => resolve();
-                request.onerror = () => reject(request.error);
+                request.onerror = (event) => reject(event.target.error);
             });
-        };
+        }
 
-        const loadScripts = () => {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction([STORE_NAME], 'readonly');
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.getAll();
-
-                request.onsuccess = () => {
-                    allScripts = request.result;
-                    resolve();
-                };
-                request.onerror = () => reject(request.error);
-            });
-        };
-
-        const deleteScript = (id) => {
+        function deleteScript(id) {
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction([STORE_NAME], 'readwrite');
                 const store = transaction.objectStore(STORE_NAME);
                 const request = store.delete(id);
 
                 request.onsuccess = () => resolve();
-                request.onerror = () => reject(request.error);
+                request.onerror = (event) => reject(event.target.error);
             });
-        };
+        }
 
-        // --- Funciones de Utilidad ---
-        const showMessage = (el, text, isSuccess = false) => {
-            const container = isSuccess ? successMessageEl : statusMessageEl;
-            const textEl = isSuccess ? successTextEl : statusTextEl;
-            textEl.textContent = text;
-            container.classList.remove('hidden');
-            setTimeout(() => {
-                container.classList.add('hidden');
-            }, 5000);
-        };
+        function getScripts() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.getAll();
 
-        const showModalMessage = (text) => {
-            modalStatusTextEl.textContent = text;
-            modalStatusMessageEl.classList.remove('hidden');
-            setTimeout(() => {
-                modalStatusMessageEl.classList.add('hidden');
-            }, 5000);
-        };
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = (event) => reject(event.target.error);
+            });
+        }
+        
+        function getScriptById(id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.get(id);
 
-        const resetForm = () => {
-            scriptForm.reset();
-            scriptIdInput.value = '';
-            saveScriptBtn.textContent = 'Guardar Guión';
-            cancelEditBtn.classList.add('hidden');
-            scriptLocationCoordsInput.value = '';
-            scriptLocationAddressInput.value = '';
-            scriptAddressInput.value = '';
-            locationStatusEl.textContent = '';
-            imagePreviewsEl.innerHTML = '';
-            fileStatusEl.textContent = '';
-            scriptImagesInput.value = '';
-            scriptVideoInput.value = '';
-            imageUploadInput.value = null;
-            videoUploadInput.value = null;
-        };
+                request.onsuccess = () => {
+                    if (request.result) {
+                        resolve(request.result);
+                    } else {
+                        reject('Script not found');
+                    }
+                };
+                request.onerror = (event) => reject(event.target.error);
+            });
+        }
 
-        const loadAllScriptsAndRender = async () => {
-            loadingSpinnerOverlayEl.classList.remove('hidden');
-            appContentEl.classList.add('hidden');
-            loadingTextEl.textContent = 'Cargando guiones...';
+        // --- UI Rendering and Handlers ---
+
+        function displayScripts(scripts) {
+            scriptsList.innerHTML = '';
+            if (scripts.length === 0) {
+                scriptsList.innerHTML = `<p class="text-center text-gray-500">No hay guiones guardados. ¡Empieza a escribir uno!</p>`;
+                return;
+            }
+
+            scripts.forEach(script => {
+                const scriptCard = document.createElement('div');
+                scriptCard.id = `script-${script.id}`;
+                scriptCard.className = 'bg-white p-6 rounded-xl shadow-lg flex flex-col sm:flex-row justify-between items-center transition-transform hover:scale-[1.01]';
+                
+                const cardContent = document.createElement('div');
+                cardContent.className = 'flex-grow mb-4 sm:mb-0';
+                cardContent.innerHTML = `
+                    <h3 class="text-xl font-semibold text-gray-800">${script.title}</h3>
+                    <p class="text-sm text-gray-500 mb-2">${getCategoryName(script.category)}</p>
+                    <p class="text-gray-600 line-clamp-3">${script.content}</p>
+                `;
+
+                const cardButtons = document.createElement('div');
+                cardButtons.className = 'flex space-x-2 mt-4 sm:mt-0 script-card-buttons';
+                
+                const viewBtn = createButton('Ver', 'view-btn', 'bg-blue-500', 'fas fa-eye', 'Ver Guión');
+                const editBtn = createButton('Editar', 'edit-btn', 'bg-yellow-500', 'fas fa-edit', 'Editar Guión');
+                const deleteBtn = createButton('Eliminar', 'delete-btn', 'bg-red-500', 'fas fa-trash-alt', 'Eliminar Guión');
+                
+                cardButtons.appendChild(viewBtn);
+                cardButtons.appendChild(editBtn);
+                cardButtons.appendChild(deleteBtn);
+
+                viewBtn.addEventListener('click', () => viewScript(script));
+                editBtn.addEventListener('click', () => editScript(script));
+                deleteBtn.addEventListener('click', () => deleteScriptFromUI(script.id));
+
+                scriptCard.appendChild(cardContent);
+                scriptCard.appendChild(cardButtons);
+                scriptsList.appendChild(scriptCard);
+            });
+        }
+
+        function createButton(text, className, bgColor, iconClass, title) {
+            const button = document.createElement('button');
+            button.textContent = text;
+            button.className = `text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center justify-center space-x-1 ${bgColor} ${className}`;
+            button.title = title;
+            const icon = document.createElement('i');
+            icon.className = iconClass;
+            button.prepend(icon);
+            return button;
+        }
+
+        async function refreshScriptsList() {
             try {
-                await initDB();
-                checkVoiceSupport();
-                await loadScripts();
-                renderFilteredScripts();
-                resetForm();
-                loadingSpinnerOverlayEl.classList.add('hidden');
-                appContentEl.classList.remove('hidden');
+                let scripts = await getScripts();
+                const searchTerm = mainSearchInput.value.toLowerCase();
+                const filterValue = filterCategory.value;
+                const sortValue = sortMenu.value;
+
+                // Filter
+                if (filterValue !== 'all') {
+                    scripts = scripts.filter(s => s.category === filterValue);
+                }
+                
+                // Search
+                if (searchTerm) {
+                    scripts = scripts.filter(s =>
+                        s.title.toLowerCase().includes(searchTerm) ||
+                        s.content.toLowerCase().includes(searchTerm)
+                    );
+                }
+
+                // Sort
+                if (sortValue === 'recent') {
+                    scripts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                } else if (sortValue === 'oldest') {
+                    scripts.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                }
+
+                displayScripts(scripts);
             } catch (error) {
-                showMessage(statusMessageEl, `Error al cargar los guiones: ${error.message}`);
-                loadingSpinnerOverlayEl.classList.add('hidden');
+                showStatus('Error al cargar los guiones: ' + error);
             }
         }
 
-        const initApp = async () => {
-            loadingTextEl.textContent = 'Inicializando aplicación...';
-            loadingSpinnerOverlayEl.classList.remove('hidden');
-            try {
-                await initDB();
-                checkVoiceSupport();
-                await loadScripts();
-                renderFilteredScripts();
-                resetForm();
-                loadingSpinnerOverlayEl.classList.add('hidden');
-                appContentEl.classList.remove('hidden');
-            } catch (error) {
-                showMessage(statusMessageEl, `Error al inicializar la app: ${error.message}`);
-                loadingSpinnerOverlayEl.classList.add('hidden');
-            }
-        };
-
-        const renderFilteredScripts = () => {
-            scriptsList.innerHTML = '';
-            const searchTerm = mainSearchInput.value.toLowerCase();
-            const filterCategory = filterCategoryInput.value;
-            const sortOption = sortMenuInput.value;
-
-            let filteredScripts = allScripts.filter(script => {
-                const matchesSearch = searchTerm === '' ||
-                                      script.title.toLowerCase().includes(searchTerm) ||
-                                      script.content.toLowerCase().includes(searchTerm) ||
-                                      (script.category && script.category.toLowerCase().includes(searchTerm));
-                                      
-                const matchesCategory = filterCategory === 'all' || script.category === filterCategory;
-
-                return matchesSearch && matchesCategory;
-            });
+        function resetForm() {
+            scriptForm.reset();
+            scriptId.value = '';
+            saveScriptBtn.textContent = 'Guardar Guión';
+            cancelEditBtn.classList.add('hidden');
+            scriptLocationCoords.value = '';
+            scriptLocationAddress.value = '';
+            locationStatus.textContent = '';
+            imagePreviews.innerHTML = '';
+            fileStatus.textContent = '';
+            uploadedImages = [];
+            uploadedVideo = null;
+        }
+        
+        function editScript(script) {
+            scriptId.value = script.id;
+            scriptTitle.value = script.title;
+            scriptCategory.value = script.category;
+            scriptContent.value = script.content;
             
-            // Lógica de ordenamiento
-            if (sortOption === 'recent') {
-                filteredScripts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            } else if (sortOption === 'oldest') {
-                filteredScripts.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            uploadedImages = script.images || [];
+            uploadedVideo = script.video || null;
+            
+            imagePreviews.innerHTML = '';
+            if (uploadedImages.length > 0) {
+                uploadedImages.forEach(base64 => {
+                    const img = document.createElement('img');
+                    img.src = base64;
+                    img.className = 'image-preview';
+                    imagePreviews.appendChild(img);
+                });
             }
             
-            if (filteredScripts.length === 0) {
-                scriptsList.innerHTML = '<p class="text-gray-500 text-center">No se encontraron guiones que coincidan.</p>';
+            if (uploadedVideo) {
+                fileStatus.textContent = 'Video cargado.';
+            } else {
+                fileStatus.textContent = '';
+            }
+
+            if (script.location) {
+                scriptLocationCoords.value = script.location.coords;
+                scriptLocationAddress.value = script.location.address;
+                locationStatus.textContent = `Ubicación guardada: ${script.location.address}`;
+            } else {
+                scriptLocationCoords.value = '';
+                scriptLocationAddress.value = '';
+                locationStatus.textContent = '';
+            }
+
+            saveScriptBtn.textContent = 'Actualizar Guión';
+            cancelEditBtn.classList.remove('hidden');
+        }
+
+        async function deleteScriptFromUI(id) {
+            if (confirm('¿Estás seguro de que quieres eliminar este guión?')) {
+                try {
+                    await deleteScript(id);
+                    showStatus('Guión eliminado exitosamente.', 'success');
+                    refreshScriptsList();
+                } catch (error) {
+                    showStatus('Error al eliminar el guión: ' + error);
+                }
+            }
+        }
+
+        function getCategoryName(value) {
+            const options = Array.from(scriptCategory.options);
+            const option = options.find(opt => opt.value === value);
+            return option ? option.textContent : 'Sin categoría';
+        }
+
+        // --- Modals ---
+
+        function loadGoogleMapsScript(callback, scriptData) {
+            if (mapScriptLoaded) {
+                callback(scriptData);
                 return;
             }
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=initMap`;
+            document.head.appendChild(script);
+            mapScriptLoaded = true;
 
-            filteredScripts.forEach(script => {
-                const scriptCard = document.createElement('div');
-                scriptCard.className = 'bg-card p-6 rounded-lg shadow-md border border-gray-200';
-                
-                let mediaHtml = '';
-                if (script.images && script.images.length > 0) {
-                    mediaHtml += '<div class="flex flex-wrap gap-2 mb-2">';
-                    script.images.forEach(imgBase64 => {
-                        mediaHtml += `<img src="${imgBase64}" class="image-preview" alt="Imagen adjunta">`;
-                    });
-                    mediaHtml += '</div>';
-                }
-                if (script.video) {
-                    mediaHtml += '<div class="flex items-center gap-2 mb-2"><i class="fas fa-video video-preview-icon"></i><span class="text-gray-600 text-sm">Video adjunto</span></div>';
-                }
-                
-                scriptCard.innerHTML = `
-                    <h3 class="text-xl font-semibold text-green-700 mb-2">${script.title}</h3>
-                    <p class="text-gray-500 text-sm mb-2">Categoría: <span class="capitalize">${script.category || 'Sin categoría'}</span></p>
-                    <p class="text-gray-700 mb-4 whitespace-pre-wrap truncate">${script.content.substring(0, 100)}...</p>
-                    ${mediaHtml}
-                    <div class="flex flex-wrap gap-2">
-                        <button class="view-btn bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300" data-id="${script.id}">Ver</button>
-                        <button class="edit-btn bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300" data-id="${script.id}">Editar</button>
-                        <button class="delete-btn bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300" data-id="${script.id}">Eliminar</button>
-                        <button class="chat-btn bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300" data-id="${script.id}">Chat con IA</button>
-                    </div>
-                `;
-                scriptsList.appendChild(scriptCard);
-            });
-            
-            addScriptEventListeners();
-        };
+            // Define the global callback
+            window.initMap = () => callback(scriptData);
+        }
 
-        const addScriptEventListeners = () => {
-            document.querySelectorAll('.view-btn').forEach(button => {
-                button.addEventListener('click', async (e) => {
-                    const scriptId = e.target.dataset.id;
-                    const script = allScripts.find(s => s.id === scriptId);
-                    if (script) {
-                        openModal(script);
-                    }
+        function initModalMap(script) {
+            if (script.location && script.location.coords && GOOGLE_MAPS_API_KEY !== "TU_API_KEY_DE_GOOGLE_MAPS_AQUÍ") {
+                const [lat, lon] = script.location.coords.split(',').map(Number);
+                const map = new google.maps.Map(mapContainer, {
+                    center: { lat, lng: lon },
+                    zoom: 12,
                 });
-            });
-
-            document.querySelectorAll('.edit-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const scriptId = e.target.dataset.id;
-                    const script = allScripts.find(s => s.id === scriptId);
-                    if (script) {
-                        scriptIdInput.value = script.id;
-                        scriptTitleInput.value = script.title;
-                        scriptContentInput.value = script.content;
-                        scriptCategoryInput.value = script.category;
-                        if (script.location) {
-                            scriptLocationCoordsInput.value = script.location.coords ? `${script.location.coords.lat},${script.location.coords.lng}` : '';
-                            scriptLocationAddressInput.value = script.location.address || '';
-                            locationStatusEl.textContent = script.location.address || `Lat: ${script.location.coords.lat}, Lng: ${script.location.coords.lng}`;
-                            scriptAddressInput.value = '';
-                        } else {
-                            resetLocationFields();
-                        }
-                        if (script.images) {
-                            scriptImagesInput.value = JSON.stringify(script.images);
-                            imagePreviewsEl.innerHTML = script.images.map(img => `<img src="${img}" class="image-preview" alt="Previsualización de imagen">`).join('');
-                        }
-                        if (script.video) {
-                            scriptVideoInput.value = script.video;
-                            imagePreviewsEl.innerHTML += `<div class="flex items-center justify-center p-2"><i class="fas fa-video video-preview-icon"></i></div>`;
-                        }
-                        
-                        saveScriptBtn.textContent = 'Actualizar Guión';
-                        cancelEditBtn.classList.remove('hidden');
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }
+                new google.maps.Marker({
+                    position: { lat, lng: lon },
+                    map,
+                    title: script.title,
                 });
-            });
-
-            document.querySelectorAll('.delete-btn').forEach(button => {
-                button.addEventListener('click', async (e) => {
-                    const scriptId = e.target.dataset.id;
-                    if (confirm('¿Estás seguro de que quieres eliminar este guión?')) {
-                        try {
-                            await deleteScript(scriptId);
-                            await loadAllScriptsAndRender();
-                            showMessage(successMessageEl, "Guión eliminado exitosamente.", true);
-                        } catch (error) {
-                            showMessage(statusMessageEl, `Error al eliminar el guión: ${error.message}`);
-                        }
-                    }
-                });
-            });
-            
-            document.querySelectorAll('.chat-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const scriptId = e.target.dataset.id;
-                    const script = allScripts.find(s => s.id === scriptId);
-                    if (script) {
-                        openIndividualChatModal(script);
-                    }
-                });
-            });
-        };
-
-        const openModal = (script) => {
-            modalTitle.textContent = script.title;
-            modalContent.textContent = script.content;
-            
-            modalImagesEl.innerHTML = '';
-            modalVideoContainer.classList.add('hidden');
-            modalVideoEl.src = '';
-            modalMediaContainer.classList.add('hidden');
-
-            if ((script.images && script.images.length > 0) || script.video) {
-                modalMediaContainer.classList.remove('hidden');
-                if (script.images && script.images.length > 0) {
-                    script.images.forEach(imgBase64 => {
-                        const img = document.createElement('img');
-                        img.src = imgBase64;
-                        img.className = 'w-1/4 h-auto rounded-lg shadow-md';
-                        modalImagesEl.appendChild(img);
-                    });
-                }
-                if (script.video) {
-                    modalVideoContainer.classList.remove('hidden');
-                    modalVideoEl.src = script.video;
-                }
+            } else {
+                 mapContainer.innerHTML = '<p class="text-center text-gray-500">No se pudo cargar el mapa. Verifica que la clave de Google Maps sea válida y que haya una ubicación guardada.</p>';
             }
+        }
+        
+        function viewScript(script) {
+            modalTitle.textContent = script.title;
+            modalContent.value = script.content;
+
+            // Media
+            modalMediaContainer.classList.add('hidden');
+            modalImages.innerHTML = '';
+            modalVideoContainer.classList.add('hidden');
+            modalVideo.src = '';
             
-            if (script.location && (script.location.address || script.location.coords)) {
+            if (script.images && script.images.length > 0) {
+                modalMediaContainer.classList.remove('hidden');
+                script.images.forEach(base64 => {
+                    const img = document.createElement('img');
+                    img.src = base64;
+                    img.className = 'image-preview';
+                    modalImages.appendChild(img);
+                });
+            }
+
+            if (script.video) {
+                modalMediaContainer.classList.remove('hidden');
+                modalVideoContainer.classList.remove('hidden');
+                modalVideo.src = script.video;
+            }
+
+            // Location
+            locationDisplayContainer.classList.add('hidden');
+            if (script.location) {
                 locationDisplayContainer.classList.remove('hidden');
-                modalLocationText.textContent = script.location.address || `Lat: ${script.location.coords.lat}, Lng: ${script.location.coords.lng}`;
+                modalLocationText.textContent = `Dirección: ${script.location.address}`;
                 if (script.location.coords) {
-                    loadMap(script.location.coords);
+                    loadGoogleMapsScript(initModalMap, script);
                 }
             } else {
-                locationDisplayContainer.classList.add('hidden');
+                modalLocationText.textContent = 'No se guardó una ubicación para este guion.';
             }
-
-            const editBtn = scriptModal.querySelector('.edit-btn');
-            const deleteBtn = scriptModal.querySelector('.delete-btn');
-            const exportBtn = scriptModal.querySelector('.export-btn');
-            
-            editBtn.dataset.id = script.id;
-            deleteBtn.dataset.id = script.id;
-            exportBtn.dataset.id = script.id;
-
-            exportBtn.addEventListener('click', () => {
-                exportData([script]);
-            });
-
-            editBtn.addEventListener('click', () => {
-                closeModal();
-                document.querySelector(`button.edit-btn[data-id='${script.id}']`).click();
-            });
-
-            deleteBtn.addEventListener('click', async () => {
-                if (confirm('¿Estás seguro de que quieres eliminar este guión?')) {
-                    try {
-                        await deleteScript(script.id);
-                        await loadAllScriptsAndRender();
-                        showMessage(successMessageEl, "Guión eliminado exitosamente.", true);
-                        closeModal();
-                    } catch (error) {
-                        showMessage(statusMessageEl, `Error al eliminar el guión: ${error.message}`);
-                    }
-                }
-            });
 
             scriptModal.classList.remove('hidden');
-            scriptModal.classList.add('flex');
-        };
+            scriptModal.dataset.scriptId = script.id;
+        }
 
-        const closeModal = () => {
-            scriptModal.classList.add('hidden');
-            scriptModal.classList.remove('flex');
-        };
-        
-        const showLoading = (el) => el.classList.remove('hidden');
-        const hideLoading = (el) => el.classList.add('hidden');
+        // --- Event Listeners ---
 
-        const openGlobalAiModal = (mode) => {
-            globalAiModal.classList.remove('hidden');
-            globalAiModal.classList.add('flex');
-            globalSummaryOutput.classList.add('hidden');
-            globalChatContainer.classList.add('hidden');
-            globalSearchContainer.classList.add('hidden');
-            loadingSpinnerModal.classList.add('hidden');
-            
-            if (mode === 'summary') {
-                globalSummaryOutput.classList.remove('hidden');
-                document.getElementById('global-ai-modal-title').textContent = 'Resumen de la Colección';
-            } else if (mode === 'chat') {
-                globalChatContainer.classList.remove('hidden');
-                document.getElementById('global-ai-modal-title').textContent = 'Chat sobre la Colección';
-                globalChatMessages.innerHTML = '';
-                globalChatHistory = [];
-            } else if (mode === 'search') {
-                globalSearchContainer.classList.remove('hidden');
-                document.getElementById('global-ai-modal-title').textContent = 'Buscar Información';
-            }
-        };
-
-        const closeGlobalAiModal = () => {
-            globalAiModal.classList.add('hidden');
-            globalAiModal.classList.remove('flex');
-        };
-
-        const addGlobalChatMessage = (role, message) => {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = role === 'user' ? 'chat-user-bubble' : 'chat-gemini-bubble';
-            messageDiv.textContent = message;
-            globalChatMessages.appendChild(messageDiv);
-            globalChatMessages.scrollTop = globalChatMessages.scrollHeight;
-        };
-
-        const openIndividualChatModal = (script) => {
-            currentScriptId = script.id;
-            individualChatTitle.textContent = `Chat: ${script.title}`;
-            individualChatModal.classList.remove('hidden');
-            individualChatModal.classList.add('flex');
-            individualChatMessages.innerHTML = '';
-
+        window.addEventListener('load', async () => {
             try {
-                individualChatHistory = script.chatHistory ? JSON.parse(script.chatHistory) : [{ role: 'user', parts: [{ text: `Hola, aquí está el guion: "${script.content}"` }] }];
-            } catch (e) {
-                console.error("Error al parsear el historial de chat", e);
-                individualChatHistory = [{ role: 'user', parts: [{ text: `Hola, aquí está el guion: "${script.content}"` }] }];
-            }
-
-            individualChatHistory.forEach(msg => {
-                if (msg.role === 'user' || msg.role === 'model') {
-                    addIndividualChatMessage(msg.role, msg.parts[0].text);
-                }
-            });
-        };
-
-        const closeIndividualChatModal = () => {
-            individualChatModal.classList.add('hidden');
-            individualChatModal.classList.remove('flex');
-            currentScriptId = null;
-        };
-
-        const addIndividualChatMessage = (role, message) => {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = role === 'user' ? 'chat-user-bubble' : 'chat-gemini-bubble';
-            messageDiv.textContent = message;
-            individualChatMessages.appendChild(messageDiv);
-            individualChatMessages.scrollTop = individualChatMessages.scrollHeight;
-        };
-
-        const exportData = (data) => {
-            const dataStr = JSON.stringify(data, null, 2);
-            const blob = new Blob([dataStr], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "guiones.json";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showMessage(successMessageEl, "Datos exportados exitosamente.", true);
-        };
-
-        const importData = (file) => {
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                try {
-                    const importedScripts = JSON.parse(e.target.result);
-                    if (!Array.isArray(importedScripts)) {
-                        throw new Error("El archivo no contiene un array de guiones válido.");
-                    }
-                    const newScripts = importedScripts.map(script => ({ ...script, id: self.crypto.randomUUID() }));
-                    for (const script of newScripts) {
-                        await saveScript(script);
-                    }
-                    await loadAllScriptsAndRender();
-                    showMessage(successMessageEl, `Se han importado ${newScripts.length} guiones exitosamente.`, true);
-                } catch (error) {
-                    showMessage(statusMessageEl, `Error al importar el archivo: ${error.message}`);
-                }
-            };
-            reader.readAsText(file);
-        };
-
-        scriptForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = scriptIdInput.value || self.crypto.randomUUID();
-            const title = scriptTitleInput.value;
-            const content = scriptContentInput.value;
-            const category = scriptCategoryInput.value;
-            const coordsString = scriptLocationCoordsInput.value;
-            const address = scriptLocationAddressInput.value;
-            const images = scriptImagesInput.value ? JSON.parse(scriptImagesInput.value) : [];
-            const video = scriptVideoInput.value || null;
-            
-            const location = coordsString ? {
-                coords: {
-                    lat: parseFloat(coordsString.split(',')[0]),
-                    lng: parseFloat(coordsString.split(',')[1])
-                },
-                address: address
-            } : null;
-
-            const existingScript = allScripts.find(s => s.id === id);
-            const chatHistory = existingScript ? existingScript.chatHistory : null;
-            const createdAt = existingScript ? existingScript.createdAt : new Date().toISOString();
-
-            const scriptToSave = {
-                id,
-                title,
-                content,
-                category,
-                location,
-                images,
-                video,
-                chatHistory,
-                createdAt
-            };
-
-            try {
-                await saveScript(scriptToSave);
-                await loadAllScriptsAndRender();
-                showMessage(successMessageEl, `Guión "${title}" guardado exitosamente.`, true);
-                resetForm();
+                showLoading('Iniciando la aplicación...');
+                await openDatabase();
+                await refreshScriptsList();
+                appContent.classList.remove('hidden');
+                hideLoading();
             } catch (error) {
-                showMessage(statusMessageEl, `Error al guardar el guión: ${error.message}`);
+                showStatus('La aplicación no pudo iniciarse correctamente: ' + error);
+                hideLoading();
             }
         });
 
-        cancelEditBtn.addEventListener('click', () => resetForm());
-        closeModalBtn.addEventListener('click', () => closeModal());
-        closeGlobalAiModalBtn.addEventListener('click', () => closeGlobalAiModal());
-        closeIndividualChatBtn.addEventListener('click', () => closeIndividualChatModal());
-        exportAllBtn.addEventListener('click', () => exportData(allScripts));
-        importFileEl.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                importData(file);
+        scriptForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const title = scriptTitle.value;
+            const category = scriptCategory.value;
+            const content = scriptContent.value;
+            const id = scriptId.value ? parseInt(scriptId.value) : null;
+
+            const script = {
+                title,
+                category,
+                content,
+                createdAt: new Date().toISOString(),
+                images: uploadedImages,
+                video: uploadedVideo,
+            };
+
+            if (scriptLocationCoords.value) {
+                script.location = {
+                    coords: scriptLocationCoords.value,
+                    address: scriptLocationAddress.value,
+                };
+            }
+
+            try {
+                if (id) {
+                    // Si el guion tiene un ID, se actualiza
+                    script.id = id;
+                    await updateScript(script);
+                    showStatus('Guion actualizado exitosamente.', 'success');
+                } else {
+                    // Si es un guion nuevo, se añade sin ID para que IndexedDB lo asigne
+                    await addScript(script);
+                    showStatus('Guion guardado exitosamente.', 'success');
+                }
+                resetForm();
+                refreshScriptsList();
+            } catch (error) {
+                showStatus('Error al guardar el guion: ' + error.message, 'error');
+                console.error('Error al guardar el guion:', error);
             }
         });
 
-        mainSearchInput.addEventListener('input', renderFilteredScripts);
-        filterCategoryInput.addEventListener('change', renderFilteredScripts);
-        sortMenuInput.addEventListener('change', renderFilteredScripts);
+        cancelEditBtn.addEventListener('click', resetForm);
+
+        closeModalBtn.addEventListener('click', () => {
+            scriptModal.classList.add('hidden');
+        });
+
+        closeGlobalAiModalBtn.addEventListener('click', () => {
+            globalAiModal.classList.add('hidden');
+            globalChatMessages.innerHTML = '';
+            globalSearchResults.innerHTML = '';
+            globalChatContainer.classList.add('hidden');
+            globalSummaryOutput.classList.add('hidden');
+            globalSearchContainer.classList.add('hidden');
+            chatHistory = [];
+        });
+
+        closeIndividualChatBtn.addEventListener('click', () => {
+            individualChatModal.classList.add('hidden');
+            individualChatMessages.innerHTML = '';
+            individualChatHistory = [];
+        });
         
-        // --- Funciones de Voz a Texto (SpeechRecognition) ---
-        const checkVoiceSupport = () => {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (SpeechRecognition) {
-                recognition = new SpeechRecognition();
-                recognition.interimResults = true;
-                recognition.lang = 'es-ES';
-                voiceToTextBtn.classList.remove('hidden');
-                voiceStatusEl.classList.remove('hidden');
-
-                recognition.addEventListener('result', (e) => {
-                    const transcript = Array.from(e.results)
-                        .map(result => result[0])
-                        .map(result => result.transcript)
-                        .join('');
-                    scriptContentInput.value = transcript;
-                });
-
-                recognition.addEventListener('end', () => {
-                    isListening = false;
-                    voiceToTextBtn.classList.remove('voice-active');
-                    voiceStatusEl.textContent = 'Presiona para hablar';
-                });
-
-                recognition.addEventListener('error', (e) => {
-                    console.error('Speech recognition error:', e.error);
-                    voiceStatusEl.textContent = `Error: ${e.error}`;
-                });
-
-            } else {
-                voiceToTextBtn.classList.add('hidden');
-                voiceStatusEl.classList.add('hidden');
-                showMessage(statusMessageEl, "Tu navegador no soporta la función de voz a texto.");
-            }
-        };
-        
-        voiceToTextBtn.addEventListener('click', () => {
-            if (isListening) {
-                recognition.stop();
-            } else {
-                recognition.start();
-                isListening = true;
-                voiceToTextBtn.classList.add('voice-active');
-                voiceStatusEl.textContent = 'Escuchando...';
+        scriptsList.addEventListener('click', async (event) => {
+            const target = event.target.closest('.edit-btn');
+            if (target) {
+                const id = parseInt(target.closest('[id^="script-"]').id.replace('script-', ''));
+                try {
+                    const script = await getScriptById(id);
+                    editScript(script);
+                } catch (error) {
+                    showStatus('No se pudo cargar el guión para editar: ' + error);
+                }
             }
         });
+        
+        mainSearchInput.addEventListener('input', refreshScriptsList);
+        filterCategory.addEventListener('change', refreshScriptsList);
+        sortMenu.addEventListener('change', refreshScriptsList);
 
-        // --- Funciones de Geolocalización y Google Maps ---
-        const resetLocationFields = () => {
-            scriptLocationCoordsInput.value = '';
-            scriptLocationAddressInput.value = '';
-            scriptAddressInput.value = '';
-            locationStatusEl.textContent = '';
-        };
-
-        const handleGeolocationSuccess = (position) => {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            scriptLocationCoordsInput.value = `${lat},${lng}`;
-            scriptLocationAddressInput.value = 'Ubicación Actual';
-            locationStatusEl.textContent = `Ubicación obtenida: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-            scriptAddressInput.value = '';
-        };
-
-        const handleGeolocationError = (error) => {
-            console.error("Error de geolocalización:", error);
-            showMessage(statusMessageEl, `Error al obtener la ubicación: ${error.message}`);
-            locationStatusEl.textContent = 'Error: No se pudo obtener la ubicación.';
-        };
+        // --- Geolocation and Address Search ---
 
         getLocationBtn.addEventListener('click', () => {
-            if ("geolocation" in navigator) {
-                locationStatusEl.textContent = 'Obteniendo ubicación...';
-                navigator.geolocation.getCurrentPosition(handleGeolocationSuccess, handleGeolocationError);
-            } else {
-                showMessage(statusMessageEl, "Geolocalización no está disponible en este navegador.");
-                locationStatusEl.textContent = 'Error: Geolocalización no disponible.';
-            }
-        });
-        
-        searchAddressBtn.addEventListener('click', async () => {
-            const address = scriptAddressInput.value.trim();
-            if (!address) {
-                showMessage(statusMessageEl, "Por favor, introduce una dirección.");
-                return;
-            }
-            locationStatusEl.textContent = 'Buscando dirección...';
-            
-            try {
-                const apiUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${googleMapsApiKey}`;
-                const response = await fetch(apiUrl);
-                const data = await response.json();
-
-                if (data.status === 'OK' && data.results.length > 0) {
-                    const location = data.results[0].geometry.location;
-                    const formattedAddress = data.results[0].formatted_address;
-                    scriptLocationCoordsInput.value = `${location.lat},${location.lng}`;
-                    scriptLocationAddressInput.value = formattedAddress;
-                    locationStatusEl.textContent = `Ubicación encontrada: ${formattedAddress}`;
-                    showMessage(successMessageEl, "¡Dirección encontrada!", true);
-                } else {
-                    const errorMessage = data.error_message || "No se encontró la dirección. Por favor, sé más específico.";
-                    throw new Error(errorMessage);
-                }
-            } catch (error) {
-                showMessage(statusMessageEl, `Error al buscar la dirección: ${error.message}`);
-                locationStatusEl.textContent = 'Error en la búsqueda.';
-            }
-        });
-
-        const loadMap = (coords) => {
-            if (!mapLoaded) {
-                const script = document.createElement('script');
-                script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&callback=initMap`;
-                script.async = true;
-                script.defer = true;
-                document.head.appendChild(script);
-                window.initMap = () => {
-                    displayMap(coords);
-                    mapLoaded = true;
-                };
-            } else {
-                displayMap(coords);
-            }
-        };
-
-        const displayMap = (coords) => {
-            if (!mapContainerEl || typeof google === 'undefined' || typeof google.maps === 'undefined') {
-                console.error('Google Maps API no está disponible.');
-                return;
-            }
-            const latLng = new google.maps.LatLng(coords.lat, coords.lng);
-            const map = new google.maps.Map(mapContainerEl, {
-                center: latLng,
-                zoom: 15,
-                gestureHandling: "cooperative"
-            });
-            new google.maps.Marker({
-                position: latLng,
-                map: map,
-                title: "Ubicación del guion"
-            });
-        };
-
-        // --- Lógica de Compresión y Manejo de Archivos Multimedia ---
-        const compressImage = (file, quality = 0.8) => {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.src = event.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        
-                        let width = img.width;
-                        let height = img.height;
-                        const MAX_WIDTH = 800;
-                        const MAX_HEIGHT = 800;
-
-                        if (width > height) {
-                            if (width > MAX_WIDTH) {
-                                height *= MAX_WIDTH / width;
-                                width = MAX_WIDTH;
-                            }
-                        } else {
-                            if (height > MAX_HEIGHT) {
-                                width *= MAX_HEIGHT / height;
-                                height = MAX_HEIGHT;
-                            }
+            if (navigator.geolocation) {
+                locationStatus.textContent = 'Obteniendo ubicación...';
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        scriptLocationCoords.value = `${lat},${lon}`;
+                        try {
+                            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
+                            const data = await response.json();
+                            const address = data.display_name || 'Dirección no encontrada';
+                            scriptLocationAddress.value = address;
+                            locationStatus.textContent = `Ubicación obtenida: ${address}`;
+                        } catch (error) {
+                            console.error('Error al obtener la dirección:', error);
+                            locationStatus.textContent = `Ubicación obtenida: ${lat}, ${lon} (No se pudo resolver la dirección)`;
                         }
-
-                        canvas.width = width;
-                        canvas.height = height;
-                        ctx.drawImage(img, 0, 0, width, height);
-                        
-                        resolve(canvas.toDataURL('image/jpeg', quality));
-                    };
-                    img.onerror = (err) => reject(err);
-                };
-                reader.readAsDataURL(file);
-            });
-        };
-
-        imageUploadInput.addEventListener('change', async (e) => {
-            const files = Array.from(e.target.files);
-            if (files.length > 5) {
-                showMessage(statusMessageEl, "Solo se pueden subir un máximo de 5 fotos.");
-                imageUploadInput.value = null;
-                return;
+                    },
+                    (error) => {
+                        console.error('Error de geolocalización:', error);
+                        locationStatus.textContent = 'No se pudo obtener la ubicación.';
+                    }
+                );
+            } else {
+                locationStatus.textContent = 'La geolocalización no está soportada por tu navegador.';
             }
+        });
 
-            imagePreviewsEl.innerHTML = '';
-            const imagesBase64 = [];
-            fileStatusEl.textContent = 'Comprimiendo imágenes...';
-            
-            for (const file of files) {
+        searchAddressBtn.addEventListener('click', async () => {
+            const addressQuery = scriptAddress.value;
+            if (addressQuery) {
+                locationStatus.textContent = 'Buscando dirección...';
                 try {
-                    const compressedBase64 = await compressImage(file);
-                    imagesBase64.push(compressedBase64);
-                    const img = document.createElement('img');
-                    img.src = compressedBase64;
-                    img.className = 'image-preview';
-                    imagePreviewsEl.appendChild(img);
+                    const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addressQuery)}&format=json&limit=1`);
+                    const data = await response.json();
+                    if (data && data.length > 0) {
+                        const result = data[0];
+                        const lat = parseFloat(result.lat);
+                        const lon = parseFloat(result.lon);
+                        scriptLocationCoords.value = `${lat},${lon}`;
+                        scriptLocationAddress.value = result.display_name;
+                        locationStatus.textContent = `Dirección encontrada: ${result.display_name}`;
+                    } else {
+                        locationStatus.textContent = 'No se encontró la dirección. Intenta con otra búsqueda.';
+                        scriptLocationCoords.value = '';
+                        scriptLocationAddress.value = '';
+                    }
                 } catch (error) {
-                    console.error("Error al comprimir la imagen:", error);
-                    showMessage(statusMessageEl, "Hubo un problema al procesar una de las imágenes.");
+                    console.error('Error al buscar la dirección:', error);
+                    locationStatus.textContent = 'Error al buscar la dirección. Inténtalo de nuevo.';
                 }
+            } else {
+                locationStatus.textContent = 'Por favor, ingresa una dirección para buscar.';
             }
-            scriptImagesInput.value = JSON.stringify(imagesBase64);
-            fileStatusEl.textContent = `Se han cargado ${imagesBase64.length} foto(s).`;
         });
-        
-        videoUploadInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
+
+        // --- Multimedia Handlers ---
+
+        imageUpload.addEventListener('change', (event) => {
+            uploadedImages = [];
+            imagePreviews.innerHTML = '';
+            const files = event.target.files;
+            if (files.length > 0) {
+                fileStatus.textContent = `Cargando ${files.length} imagen(es)...`;
+                let filesProcessed = 0;
+                for (const file of files) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'image-preview';
+                        imagePreviews.appendChild(img);
+                        uploadedImages.push(e.target.result);
+                        filesProcessed++;
+                        if (filesProcessed === files.length) {
+                            fileStatus.textContent = `${files.length} imagen(es) cargada(s).`;
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            } else {
+                fileStatus.textContent = '';
+            }
+        });
+
+        videoUpload.addEventListener('change', (event) => {
+            uploadedVideo = null;
+            const file = event.target.files[0];
             if (file) {
+                fileStatus.textContent = 'Cargando video...';
                 const reader = new FileReader();
-                reader.onload = () => {
-                    scriptVideoInput.value = reader.result;
-                    fileStatusEl.textContent = 'Video cargado exitosamente.';
-                    imagePreviewsEl.innerHTML = `<div class="flex items-center justify-center p-2"><i class="fas fa-video video-preview-icon"></i></div>`;
-                    imageUploadInput.value = null;
+                reader.onload = (e) => {
+                    uploadedVideo = e.target.result;
+                    fileStatus.textContent = 'Video cargado.';
                 };
                 reader.readAsDataURL(file);
+            } else {
+                fileStatus.textContent = '';
             }
         });
 
+        // --- API & AI Functions ---
 
-        // --- Implementación de la API de Gemini ---
-        const callGeminiApi = async (history, systemPrompt, tools = []) => {
+        async function getModelResponse(prompt, history = [], isGlobalSearch = false) {
+            if (GEMINI_API_KEY === "TU_API_KEY_DE_GEMINI_AQUÍ" || !GEMINI_API_KEY) {
+                throw new Error('API_KEY de Gemini no configurada. Reemplaza "TU_API_KEY_DE_GEMINI_AQUÍ" con tu clave real.');
+            }
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+            const parts = [{ text: prompt }];
+
+            const requestBody = {
+                contents: [
+                    ...history,
+                    { role: "user", parts }
+                ]
+            };
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('API Error:', errorData);
+                throw new Error(`Error de la API: ${response.status} - ${errorData.error.message}`);
+            }
+
+            const data = await response.json();
+            if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+                return data.candidates[0].content.parts[0].text;
+            } else {
+                throw new Error('Respuesta de la API inesperada.');
+            }
+        }
+
+        async function summarizeAllScripts() {
+            showLoadingModal();
             try {
-                const payload = {
-                    contents: history,
-                    generation_config: {
-                        temperature: 0.9,
-                        topK: 1,
-                        topP: 1,
-                    },
-                    tools: tools,
-                    system_instruction: { parts: [{ text: systemPrompt }] }
-                };
-
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload),
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(`Error de la API: ${errorData.error.message}`);
+                const scripts = await getScripts();
+                if (scripts.length === 0) {
+                    showModalStatus('No hay guiones para resumir.', 'error');
+                    hideLoadingModal();
+                    return;
                 }
-
-                const data = await response.json();
-                const text = data.candidates[0].content.parts[0].text;
-                const sources = data.candidates[0].citationMetadata?.citationSources || [];
-                
-                return { text, sources };
+                const combinedContent = scripts.map(s => `Título: ${s.title}\nContenido: ${s.content}`).join('\n\n---\n\n');
+                const prompt = `Actúa como un analista de historias profesional. Analiza y resume la siguiente colección de guiones. Identifica temas recurrentes, la diversidad de categorías y cualquier otro patrón interesante. Formatea tu respuesta con títulos y viñetas para que sea fácil de leer.\n\nGuiones:\n${combinedContent}`;
+                const summary = await getModelResponse(prompt);
+                globalSummaryOutput.innerHTML = marked.parse(summary);
+                globalSummaryOutput.classList.remove('hidden');
+                globalChatContainer.classList.add('hidden');
+                globalSearchContainer.classList.add('hidden');
             } catch (error) {
-                console.error("Error al llamar a la API de Gemini:", error);
-                return { text: "Lo siento, hubo un error al conectar con la IA. Por favor, revisa tu clave de API y tu conexión a internet.", sources: [] };
+                showModalStatus('Error al generar el resumen: ' + error.message, 'error');
+            } finally {
+                hideLoadingModal();
             }
-        };
+        }
 
-        // --- Eventos de los botones de IA globales ---
-        summarizeAllBtn.addEventListener('click', async () => {
-            openGlobalAiModal('summary');
-            showLoading(loadingSpinnerModal);
+        async function chatWithAllScripts() {
+            globalChatMessages.innerHTML = '';
+            globalChatContainer.classList.remove('hidden');
+            globalSummaryOutput.classList.add('hidden');
+            globalSearchContainer.classList.add('hidden');
             
-            if (allScripts.length === 0) {
-                globalSummaryOutput.textContent = "No hay guiones para resumir. Añade algunos primero.";
-                hideLoading(loadingSpinnerModal);
-                return;
+            showLoadingModal();
+            try {
+                const scripts = await getScripts();
+                const combinedContent = scripts.map(s => `Título: ${s.title}\nContenido: ${s.content}`).join('\n\n---\n\n');
+                const systemPrompt = `Actúa como un asistente de IA experto en guiones. Tienes acceso a la siguiente colección de guiones. Responde preguntas sobre ellos, compara guiones, identifica patrones o elabora sobre temas específicos basándote solo en la información proporcionada. Sé conciso y útil.\n\nColección de Guiones:\n${combinedContent}\n\n`;
+                chatHistory.push({ role: "user", parts: [{ text: systemPrompt }] });
+                const greeting = await getModelResponse('Hola, ¿qué puedes hacer con esta colección?', chatHistory);
+                addMessageToChat('gemini', greeting, globalChatMessages);
+                hideLoadingModal();
+            } catch (error) {
+                showModalStatus('Error al iniciar el chat: ' + error.message, 'error');
+                hideLoadingModal();
             }
+        }
 
-            const combinedScripts = allScripts.map(script => `Título: ${script.title}\nContenido: ${script.content}`).join('\n\n---\n\n');
-            const systemPrompt = "Eres un asistente de escritura. Genera un resumen conciso y coherente de la colección de guiones proporcionada. Resalta los temas comunes, personajes recurrentes o la trama general, si los hay.";
-            const { text } = await callGeminiApi([{ role: 'user', parts: [{ text: combinedScripts }] }], systemPrompt);
+        async function searchWithWeb() {
+            globalSearchResults.innerHTML = '';
+            globalSearchContainer.classList.remove('hidden');
+            globalSummaryOutput.classList.add('hidden');
+            globalChatContainer.classList.add('hidden');
+        }
+
+        async function chatWithIndividualScript(script) {
+            individualChatMessages.innerHTML = '';
+            individualChatModal.classList.remove('hidden');
+            individualChatTitle.textContent = `Chat con: ${script.title}`;
             
-            globalSummaryOutput.textContent = text;
-            hideLoading(loadingSpinnerModal);
-        });
+            showLoadingModal();
+            try {
+                const systemPrompt = `Actúa como un asistente de IA experto en guiones. Tienes acceso al siguiente guion. Responde preguntas sobre él, analiza su estructura, personajes, y temas. Sé conciso y útil.\n\nGuion:\n${script.content}\n\n`;
+                individualChatHistory.push({ role: "user", parts: [{ text: systemPrompt }] });
+                const greeting = await getModelResponse('Hola, ¿puedes resumir este guion para mí?', individualChatHistory);
+                addMessageToChat('gemini', greeting, individualChatMessages);
+                hideLoadingModal();
+            } catch (error) {
+                showModalStatus('Error al iniciar el chat: ' + error.message, 'error');
+                hideLoadingModal();
+            }
+        }
 
-        chatAllBtn.addEventListener('click', () => {
-            openGlobalAiModal('chat');
-        });
+        function addMessageToChat(role, text, container) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = role === 'user' ? 'chat-user-bubble' : 'chat-gemini-bubble';
+            messageDiv.innerHTML = marked.parse(text);
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
 
         globalChatSendBtn.addEventListener('click', async () => {
             const userMessage = globalChatInput.value.trim();
             if (!userMessage) return;
 
-            addGlobalChatMessage('user', userMessage);
+            addMessageToChat('user', userMessage, globalChatMessages);
             globalChatInput.value = '';
-            showLoading(loadingSpinnerModal);
-            
-            globalChatHistory.push({ role: 'user', parts: [{ text: userMessage }] });
-            
-            const combinedScripts = allScripts.map(script => `Título: ${script.title}\nContenido: ${script.content}`).join('\n\n---\n\n');
-            const systemPrompt = `Eres un asistente de escritura útil y creativo. Responde a las preguntas del usuario basándote en la colección de guiones que te han proporcionado. Sé conciso y céntrate en el contexto dado. No te inventes información. La colección de guiones es:\n\n${combinedScripts}`;
-            const { text } = await callGeminiApi(globalChatHistory, systemPrompt);
-            
-            addGlobalChatMessage('model', text);
-            globalChatHistory.push({ role: 'model', parts: [{ text }] });
+            showLoadingModal();
 
-            hideLoading(loadingSpinnerModal);
-        });
-
-        globalChatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                globalChatSendBtn.click();
+            try {
+                chatHistory.push({ role: "user", parts: [{ text: userMessage }] });
+                const geminiResponse = await getModelResponse(userMessage, chatHistory);
+                chatHistory.push({ role: "model", parts: [{ text: geminiResponse }] });
+                addMessageToChat('gemini', geminiResponse, globalChatMessages);
+            } catch (error) {
+                showModalStatus('Error en la respuesta de la IA. Por favor, intenta de nuevo.', 'error');
+                console.error('Chat error:', error);
+            } finally {
+                hideLoadingModal();
             }
-        });
-
-        searchAllBtn.addEventListener('click', () => {
-            openGlobalAiModal('search');
         });
 
         globalSearchSendBtn.addEventListener('click', async () => {
             const userQuery = globalSearchInput.value.trim();
             if (!userQuery) return;
-            
+
             globalSearchResults.innerHTML = '';
-            showLoading(loadingSpinnerModal);
-
-            const systemPrompt = "Eres un motor de búsqueda que proporciona respuestas directas y precisas. No añadas información personal.";
-            const { text, sources } = await callGeminiApi([{ role: 'user', parts: [{ text: userQuery }] }], systemPrompt, [{ google_search: {} }]);
-            
-            if (text) {
-                const resultDiv = document.createElement('div');
-                resultDiv.className = 'ai-message';
-                resultDiv.innerHTML = `<p>${text}</p>`;
-                globalSearchResults.appendChild(resultDiv);
-
-                if (sources.length > 0) {
-                    const sourcesDiv = document.createElement('div');
-                    sourcesDiv.className = 'text-sm text-gray-600 mt-2';
-                    sourcesDiv.innerHTML = '<p class="font-bold">Fuentes:</p>';
-                    sources.forEach(source => {
-                        const a = document.createElement('a');
-                        a.href = source.uri;
-                        a.textContent = source.title;
-                        a.className = 'block underline text-green-700 hover:text-green-800';
-                        a.target = '_blank';
-                        sourcesDiv.appendChild(a);
-                    });
-                    globalSearchResults.appendChild(sourcesDiv);
-                }
-            }
-            
-            hideLoading(loadingSpinnerModal);
-        });
-        
-        globalSearchInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                globalSearchSendBtn.click();
+            showLoadingModal();
+            try {
+                const prompt = `Busca información en la web sobre "${userQuery}" y resume los hallazgos en español.`;
+                const searchResponse = await getModelResponse(prompt, [], true);
+                addMessageToChat('gemini', searchResponse, globalSearchResults);
+            } catch (error) {
+                showModalStatus('Error al realizar la búsqueda: ' + error.message, 'error');
+            } finally {
+                hideLoadingModal();
             }
         });
 
-        // --- Eventos de los botones de IA individuales ---
         individualChatSendBtn.addEventListener('click', async () => {
             const userMessage = individualChatInput.value.trim();
             if (!userMessage) return;
-
-            addIndividualChatMessage('user', userMessage);
+            
+            addMessageToChat('user', userMessage, individualChatMessages);
             individualChatInput.value = '';
-            showLoading(loadingSpinnerModal);
-
-            const scriptToUpdate = allScripts.find(s => s.id === currentScriptId);
-            if (!scriptToUpdate) {
-                showMessage(statusMessageEl, "Error: No se encontró el guión para el chat.");
-                hideLoading(loadingSpinnerModal);
-                return;
-            }
-
-            individualChatHistory.push({ role: 'user', parts: [{ text: userMessage }] });
-
-            const systemPrompt = `Eres un asistente de escritura útil y creativo. Responde a las preguntas del usuario basándote en el siguiente guion: "${scriptToUpdate.content}". Sé conciso y céntrate en el contexto dado. No te inventes información. Si no puedes responder con el contexto dado, simplemente di 'Lo siento, no puedo responder a eso con el guion proporcionado'.`;
-            const { text } = await callGeminiApi(individualChatHistory, systemPrompt);
+            showLoadingModal();
             
-            addIndividualChatMessage('model', text);
-            individualChatHistory.push({ role: 'model', parts: [{ text }] });
-            
-            scriptToUpdate.chatHistory = JSON.stringify(individualChatHistory);
-            await saveScript(scriptToUpdate);
-
-            hideLoading(loadingSpinnerModal);
-        });
-
-        individualChatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                individualChatSendBtn.click();
+            try {
+                individualChatHistory.push({ role: "user", parts: [{ text: userMessage }] });
+                const geminiResponse = await getModelResponse(userMessage, individualChatHistory);
+                individualChatHistory.push({ role: "model", parts: [{ text: geminiResponse }] });
+                addMessageToChat('gemini', geminiResponse, individualChatMessages);
+            } catch (error) {
+                showModalStatus('Error en la respuesta de la IA. Por favor, intenta de nuevo.', 'error');
+                console.error('Individual chat error:', error);
+            } finally {
+                hideLoadingModal();
             }
         });
-        
-        window.onload = initApp;
+
+        // --- Export/Import ---
+
+        exportAllBtn.addEventListener('click', async () => {
+            try {
+                const scripts = await getScripts();
+                const dataStr = JSON.stringify(scripts, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'guiones_exportados.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showStatus('Todos los guiones han sido exportados.', 'success');
+            } catch (error) {
+                showStatus('Error al exportar los guiones: ' + error.message, 'error');
+            }
+        });
+
+        importFile.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const scripts = JSON.parse(e.target.result);
+                    for (const script of scripts) {
+                        delete script.id; // Remove old ID to let IndexedDB create a new one
+                        await addScript(script);
+                    }
+                    showStatus(`${scripts.length} guiones importados exitosamente.`, 'success');
+                    refreshScriptsList();
+                } catch (error) {
+                    showStatus('Error al importar el archivo. Asegúrate de que es un archivo JSON válido.', 'error');
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // --- Voice-to-Text ---
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'es-ES';
+            recognition.interimResults = true;
+
+            let isRecognizing = false;
+
+            voiceToTextBtn.addEventListener('click', () => {
+                if (isRecognizing) {
+                    recognition.stop();
+                    return;
+                }
+
+                voiceStatus.textContent = 'Escuchando... Di algo.';
+                voiceStatus.classList.remove('hidden');
+                voiceToTextBtn.classList.add('voice-active');
+                
+                recognition.start();
+                isRecognizing = true;
+            });
+
+            recognition.onresult = (event) => {
+                const transcript = Array.from(event.results)
+                    .map(result => result[0].transcript)
+                    .join('');
+                scriptContent.value = transcript;
+            };
+
+            recognition.onend = () => {
+                voiceStatus.textContent = '';
+                voiceStatus.classList.add('hidden');
+                voiceToTextBtn.classList.remove('voice-active');
+                isRecognizing = false;
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                voiceStatus.textContent = `Error: ${event.error}. Intenta de nuevo.`;
+                voiceToTextBtn.classList.remove('voice-active');
+                isRecognizing = false;
+            };
+        } else {
+            voiceToTextBtn.disabled = true;
+            voiceToTextBtn.title = 'Reconocimiento de voz no soportado en este navegador';
+            voiceToTextBtn.style.cursor = 'not-allowed';
+        }
     </script>
 </body>
 </html>
